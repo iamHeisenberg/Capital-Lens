@@ -51,7 +51,7 @@ function StockAnalysis() {
     const ticker = 'RELIANCE.NS';
 
     useEffect(() => {
-        fetch(`http://localhost:5000/api/price/${ticker}`)
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/api/price/${ticker}`)
             .then((res) => res.json())
             .then((result) => {
                 if (result.error) {
