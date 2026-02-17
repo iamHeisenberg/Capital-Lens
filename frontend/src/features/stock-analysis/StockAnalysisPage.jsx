@@ -3,6 +3,7 @@ import {
     Typography,
     Grid
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import PageLayout from '../../components/layout/PageLayout';
 import useStockData from './hooks/useStockData';
 import { calcDistance, getInterpretation } from './utils/interpretation';
@@ -109,6 +110,7 @@ function StockAnalysisPage() {
                     dma200={data.dma200}
                     distFromDma50={distFromDma50}
                     distFromDma200={distFromDma200}
+                    lastUpdated={data.lastUpdated}
                 />
                 <TrendCard
                     trend={data.trend}
@@ -117,6 +119,22 @@ function StockAnalysisPage() {
                 />
                 <InterpretationCard interpretation={interpretation} />
             </Grid>
+
+            {/* Methodology Link */}
+            <Box sx={{ mt: 3 }}>
+                <Link to="/methodology" style={{ textDecoration: 'none' }}>
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            color: '#06b6d4',
+                            transition: 'opacity 0.2s',
+                            '&:hover': { opacity: 0.7 },
+                        }}
+                    >
+                        View Framework Methodology →
+                    </Typography>
+                </Link>
+            </Box>
         </PageLayout>
     );
 }

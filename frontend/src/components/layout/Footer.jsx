@@ -1,5 +1,6 @@
 import { Box, Container, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
+import { APP_VERSION } from '../../config/version';
 
 function Footer() {
     return (
@@ -15,17 +16,22 @@ function Footer() {
                 maxWidth="lg"
                 sx={{
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: 2,
+                    gap: 1.5,
                     px: { xs: 2, md: 4 },
                 }}
             >
-                <Typography sx={{ fontSize: '0.75rem', color: '#3a3a4e' }}>
-                    &copy; 2026 CapitalLens. Systematic analysis for NSE equity markets.
+                <Typography sx={{ fontSize: '0.8rem', color: '#5a5a6e', fontWeight: 500 }}>
+                    CapitalLens v{APP_VERSION}
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 3 }}>
+                <Typography variant="caption" sx={{ color: '#3a3a4e' }}>
+                    Data Source: Yahoo Finance (Daily Closing Prices)
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#3a3a4e', textAlign: 'center', maxWidth: 520 }}>
+                    This platform is a decision-support framework and does not constitute investment advice.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 3, mt: 0.5 }}>
                     <Link to="/methodology" style={{ textDecoration: 'none' }}>
                         <Typography
                             sx={{

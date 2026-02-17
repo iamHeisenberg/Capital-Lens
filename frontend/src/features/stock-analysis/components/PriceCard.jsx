@@ -1,6 +1,10 @@
 import { Box, Typography, Grid } from '@mui/material';
 
-function PriceCard({ latestClose, dma50, dma200, distFromDma50, distFromDma200 }) {
+function PriceCard({ latestClose, dma50, dma200, distFromDma50, distFromDma200, lastUpdated }) {
+    const formattedDate = lastUpdated
+        ? new Date(lastUpdated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '';
+
     return (
         <Grid item xs={12}>
             <Box
@@ -75,9 +79,15 @@ function PriceCard({ latestClose, dma50, dma200, distFromDma50, distFromDma200 }
                         </Box>
                     </Grid>
                 </Grid>
+
+                {/* Data Transparency */}
+                <Typography variant="caption" sx={{ display: 'block', mt: 2, color: '#5a5a6e' }}>
+                    Data as of: {formattedDate} · Source: Yahoo Finance (Daily Close Data) · Updates: End-of-day
+                </Typography>
             </Box>
         </Grid>
     );
 }
 
 export default PriceCard;
+
