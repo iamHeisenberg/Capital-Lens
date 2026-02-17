@@ -1,7 +1,6 @@
 import {
     Box,
     Typography,
-    CircularProgress,
     Grid
 } from '@mui/material';
 import PageLayout from '../../components/layout/PageLayout';
@@ -11,29 +10,51 @@ import PriceCard from './components/PriceCard';
 import TrendCard from './components/TrendCard';
 import InterpretationCard from './components/InterpretationCard';
 
+function LoadingSkeleton() {
+    return (
+        <PageLayout>
+            <Box sx={{ py: 4 }}>
+                <Box className="skeleton-pulse" sx={{ height: 48, width: '60%', mb: 2 }} />
+                <Box className="skeleton-pulse" sx={{ height: 20, width: '40%', mb: 6 }} />
+                <Box className="skeleton-pulse" sx={{ height: 24, width: '30%', mb: 1 }} />
+                <Box className="skeleton-pulse" sx={{ height: 18, width: '25%', mb: 4 }} />
+                <Box className="skeleton-pulse" sx={{ height: 240, width: '100%', mb: 4 }} />
+                <Grid container spacing={4}>
+                    <Grid item xs={12} md={6}>
+                        <Box className="skeleton-pulse" sx={{ height: 200 }} />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <Box className="skeleton-pulse" sx={{ height: 200 }} />
+                    </Grid>
+                </Grid>
+            </Box>
+        </PageLayout>
+    );
+}
+
 function StockAnalysisPage() {
     const ticker = 'RELIANCE.NS';
     const { data, loading, error } = useStockData(ticker);
 
     if (loading) {
-        return (
-            <PageLayout>
-                <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '60vh'
-                }}>
-                    <CircularProgress size={32} sx={{ color: '#666' }} />
-                </Box>
-            </PageLayout>
-        );
+        return <LoadingSkeleton />;
     }
 
     if (error) {
         return (
             <PageLayout>
-                <Typography color="error">{error}</Typography>
+                <Box
+                    className="glass-card"
+                    sx={{
+                        p: 4,
+                        mt: 4,
+                        borderLeft: '3px solid #ef4444',
+                    }}
+                >
+                    <Typography sx={{ color: '#ef4444', fontWeight: 500 }}>
+                        {error}
+                    </Typography>
+                </Box>
             </PageLayout>
         );
     }
@@ -46,38 +67,36 @@ function StockAnalysisPage() {
 
     return (
         <PageLayout>
-            {/* Hero Section */}
-            <Box sx={{ mb: 6 }}>
-                <Typography sx={{
-                    fontSize: '3rem',
-                    fontWeight: 700,
-                    letterSpacing: '-0.03em',
-                    lineHeight: 1.1,
-                    mb: 1
-                }}>
-                    Structural Discipline.
-                    <br />
-                    <span style={{ color: '#666', fontWeight: 400 }}>Indian Equities.</span>
-                </Typography>
-                <Typography sx={{
-                    fontSize: '0.95rem',
-                    color: '#666',
-                    mt: 2,
-                    maxWidth: '600px'
-                }}>
-                    A systematic framework for trend-based investing in NSE stocks.
-                </Typography>
-            </Box>
-
             {/* Ticker Header */}
-            <Box sx={{ mb: 4, borderBottom: '1px solid #2a2a2a', pb: 2 }}>
-                <Typography variant="h6" sx={{ color: '#666', mb: 0.5 }}>
-                    CURRENT ANALYSIS
-                </Typography>
-                <Typography sx={{ fontSize: '1.5rem', fontWeight: 600, color: '#fff' }}>
-                    {data.ticker}
-                </Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#666', mt: 0.5 }}>
+            <Box
+                className="animate-fade-in-up delay-1"
+                sx={{
+                    mb: 5,
+                    pb: 3,
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-end',
+                    flexWrap: 'wrap',
+                    gap: 2,
+                }}
+            >
+                <Box>
+                    <Typography variant="h6" sx={{ mb: 0.5 }}>
+                        CURRENT ANALYSIS
+                    </Typography>
+                    <Typography
+                        sx={{
+                            fontSize: '1.5rem',
+                            fontWeight: 600,
+                            color: '#e8e8ed',
+                            letterSpacing: '-0.01em',
+                        }}
+                    >
+                        {data.ticker}
+                    </Typography>
+                </Box>
+                <Typography variant="body2">
                     Last Updated: {new Date(data.lastUpdated).toLocaleString()}
                 </Typography>
             </Box>

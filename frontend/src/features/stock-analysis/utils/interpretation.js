@@ -48,7 +48,7 @@ export const getInterpretation = (data) => {
  * @returns {string} Hex color code
  */
 export const getTrendColor = (trend) => {
-    if (trend === 'Uptrend') return '#00ff88';
-    if (trend === 'Downtrend') return '#ff4444';
-    return '#ff9500';
+    if (trend === 'Uptrend') return '#22c55e';
+    if (trend === 'Downtrend') return '#ef4444';
+    return '#f59e0b';
 };
