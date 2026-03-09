@@ -1,0 +1,24 @@
+const express = require('express');
+const router = express.Router();
+const { fetchFinancials } = require('../services/fundamentals/fetchFinancials');
+const { computeMetrics } = require('../services/fundamentals/computeMetrics');
+
+/**
+ * GET /api/fundamentals/:ticker
+ *
+ * Production endpoint — returns computed fundamental metrics.
+ * No raw data, no debug fields, no statement counts.
+ */
+router.get('/fundamentals/:ticker', async (req, res) => {
+    try {
+        const { ticker } = req.params;
+        const rawData = await fetchFinancials(ticker);
+        const metrics = computeMetrics(rawData);
+        res.json(metrics);
+    } catch (err) {
+        const status = err.statusCode || 500;
+        res.status(status).json({ error: err.message });
+    }
+});
+
+module.exports = router;
