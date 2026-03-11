@@ -15,7 +15,13 @@ const features = [
         description: 'A five-layer investment framework — from durable business quality to AI-augmented risk validation. Built for long-term compounders.',
         path: '/methodology',
         cta: 'Read Framework',
-        accent: '#06b6d4',
+    },
+    {
+        title: 'Fundamentals',
+        description: 'Multi-layer financial analysis covering growth, profitability, capital efficiency, and valuation. Real-time data mapped to India-specific thresholds.',
+        path: '/fundamentals',
+        cta: 'View Fundamentals',
+        accent: '#f59e0b',
     },
 ];
 

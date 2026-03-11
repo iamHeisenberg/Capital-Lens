@@ -26,7 +26,7 @@ function Footer() {
                     CapitalLens v{APP_VERSION}
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#3a3a4e' }}>
-                    Data Source: Yahoo Finance (Daily Closing Prices)
+                    Data Source: Yahoo Finance
                 </Typography>
                 <Typography variant="caption" sx={{ color: '#3a3a4e', textAlign: 'center', maxWidth: 520 }}>
                     This platform is a decision-support framework and does not constitute investment advice.

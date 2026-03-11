@@ -120,8 +120,20 @@ function StockAnalysisPage() {
                 <InterpretationCard interpretation={interpretation} />
             </Grid>
 
-            {/* Methodology Link */}
-            <Box sx={{ mt: 3 }}>
+            {/* Cross-links */}
+            <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Link to="/fundamentals" style={{ textDecoration: 'none' }}>
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            color: '#22c55e',
+                            transition: 'opacity 0.2s',
+                            '&:hover': { opacity: 0.7 },
+                        }}
+                    >
+                        View Fundamentals →
+                    </Typography>
+                </Link>
                 <Link to="/methodology" style={{ textDecoration: 'none' }}>
                     <Typography
                         variant="body2"
