@@ -77,8 +77,8 @@ export function getRoceColor(value) {
 // ─── CFO / EBITDA (cash conversion) ──────────────────────────
 export function getCfoEbitdaColor(value) {
     if (value == null) return COLORS.neutral;
-    if (value > 0.9) return COLORS.green;
-    if (value >= 0.7) return COLORS.amber;
+    if (value > 0.8) return COLORS.green;
+    if (value >= 0.4) return COLORS.amber;
     return COLORS.red;
 }
 

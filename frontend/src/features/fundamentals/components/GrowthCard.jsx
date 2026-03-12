@@ -1,10 +1,10 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Divider } from '@mui/material';
 import MetricBlock from './MetricBlock';
-import { getGrowthColor } from '../utils/getMetricColor';
+import { getSalesGrowthColor, getProfitGrowthColor } from '../utils/getMetricColor';
 
 /**
  * Growth metrics card — Sales & Profit growth stacked vertically.
- * Thresholds benchmarked against India's nominal GDP (~10–12%).
+ * 5Y CAGR excluded due to Yahoo Finance API limitations.
  */
 function GrowthCard({ growth }) {
     const sales = growth?.sales || {};
@@ -40,10 +40,11 @@ function GrowthCard({ growth }) {
                 Sales
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
-                <MetricBlock label="YoY" value={sales.yoy} suffix="%" color={getGrowthColor(sales.yoy)} />
-                <MetricBlock label="3Y CAGR" value={sales.cagr3y} suffix="%" color={getGrowthColor(sales.cagr3y)} />
-                <MetricBlock label="5Y CAGR" value={sales.cagr5y} suffix="%" color={getGrowthColor(sales.cagr5y)} />
+                <MetricBlock label="YoY" value={sales.yoy} suffix="%" color={getSalesGrowthColor(sales.yoy)} />
+                <MetricBlock label="3Y CAGR" value={sales.cagr3y} suffix="%" color={getSalesGrowthColor(sales.cagr3y)} />
             </Box>
+
+            <Divider sx={{ my: 1.5, borderColor: 'rgba(255, 255, 255, 0.08)' }} />
 
             {/* Profit */}
             <Typography
@@ -57,9 +58,8 @@ function GrowthCard({ growth }) {
                 Profit
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <MetricBlock label="YoY" value={profit.yoy} suffix="%" color={getGrowthColor(profit.yoy)} />
-                <MetricBlock label="3Y CAGR" value={profit.cagr3y} suffix="%" color={getGrowthColor(profit.cagr3y)} />
-                <MetricBlock label="5Y CAGR" value={profit.cagr5y} suffix="%" color={getGrowthColor(profit.cagr5y)} />
+                <MetricBlock label="YoY" value={profit.yoy} suffix="%" color={getProfitGrowthColor(profit.yoy)} />
+                <MetricBlock label="3Y CAGR" value={profit.cagr3y} suffix="%" color={getProfitGrowthColor(profit.cagr3y)} />
             </Box>
         </Box>
     );

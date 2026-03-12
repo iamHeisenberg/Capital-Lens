@@ -2,8 +2,7 @@ import { Box, Typography } from '@mui/material';
 import PageLayout from '../../components/layout/PageLayout';
 import useFundamentals from './hooks/useFundamentals';
 import ValuationCard from './components/ValuationCard';
-import SalesGrowthCard from './components/SalesGrowthCard';
-import ProfitGrowthCard from './components/ProfitGrowthCard';
+import GrowthCard from './components/GrowthCard';
 import ProfitabilityCard from './components/ProfitabilityCard';
 import EfficiencyCard from './components/EfficiencyCard';
 import BalanceSheetCard from './components/BalanceSheetCard';
@@ -83,18 +82,17 @@ function FundamentalsPage() {
                 </Typography>
             </Box>
 
-            {/* 6 Cards — Single horizontal row */}
+            {/* 5 Cards — Single horizontal row */}
             <Box
                 sx={{
                     display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
+                    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(5, 1fr)' },
                     gap: 2,
                     alignItems: 'start',
                 }}
             >
                 <ValuationCard valuation={data.valuation} />
-                <SalesGrowthCard sales={data.growth?.sales} />
-                <ProfitGrowthCard profit={data.growth?.profit} />
+                <GrowthCard growth={data.growth} />
                 <ProfitabilityCard profitability={data.profitability} />
                 <EfficiencyCard capitalEfficiency={data.capitalEfficiency} />
                 <BalanceSheetCard balanceSheet={data.balanceSheet} />

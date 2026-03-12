@@ -128,12 +128,10 @@ function computeGrowth(timeSeries, incomeAnnual) {
         sales: {
             yoy: revenues.length >= 2 ? calculateYoY(revenues[0], revenues[1]) : null,
             cagr3y: revenues.length >= 4 ? calculateCAGR(revenues[0], revenues[3], 3) : null,
-            cagr5y: revenues.length >= 6 ? calculateCAGR(revenues[0], revenues[5], 5) : null,
         },
         profit: {
             yoy: netIncomes.length >= 2 ? calculateYoY(netIncomes[0], netIncomes[1]) : null,
             cagr3y: netIncomes.length >= 4 ? calculateCAGR(netIncomes[0], netIncomes[3], 3) : null,
-            cagr5y: netIncomes.length >= 6 ? calculateCAGR(netIncomes[0], netIncomes[5], 5) : null,
         },
     };
 }
