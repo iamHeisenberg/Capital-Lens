@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import MetricBlock from './MetricBlock';
-import { getGrowthColor } from '../utils/getMetricColor';
+import { getProfitGrowthColor } from '../utils/getMetricColor';
 
 /**
  * Profit Growth card — YoY, 3Y CAGR, 5Y CAGR.
@@ -18,9 +18,9 @@ function ProfitGrowthCard({ profit }) {
             </Typography>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <MetricBlock label="YoY" value={yoy} suffix="%" color={getGrowthColor(yoy)} />
-                <MetricBlock label="3Y CAGR" value={cagr3y} suffix="%" color={getGrowthColor(cagr3y)} />
-                <MetricBlock label="5Y CAGR" value={cagr5y} suffix="%" color={getGrowthColor(cagr5y)} />
+                <MetricBlock label="YoY" value={yoy} suffix="%" color={getProfitGrowthColor(yoy)} />
+                <MetricBlock label="3Y CAGR" value={cagr3y} suffix="%" color={getProfitGrowthColor(cagr3y)} />
+                <MetricBlock label="5Y CAGR" value={cagr5y} suffix="%" color={getProfitGrowthColor(cagr5y)} />
             </Box>
         </Box>
     );

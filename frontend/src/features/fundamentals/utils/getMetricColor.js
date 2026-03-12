@@ -17,9 +17,16 @@ const COLORS = {
     neutral: '#5a5a6e',
 };
 
-// ─── Growth (Sales YoY/CAGR, Profit YoY/CAGR) ───────────────
-// India nominal GDP ~10–12%, so >15% = outperforming
-export function getGrowthColor(value) {
+// ─── Profit Growth (YoY, CAGR, 3y CAGR) ───────────────
+export function getProfitGrowthColor(value) {
+    if (value == null) return COLORS.neutral;
+    if (value > 18) return COLORS.green;
+    if (value >= 10) return COLORS.amber;
+    return COLORS.red;
+}
+
+// ─── Sales Growth (YoY, CAGR, 3y CAGR) ───────────────
+export function getSalesGrowthColor(value) {
     if (value == null) return COLORS.neutral;
     if (value > 15) return COLORS.green;
     if (value >= 8) return COLORS.amber;
