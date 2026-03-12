@@ -2,16 +2,26 @@ const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 const { calculateDMA } = require('../utils/dmaUtils');
 const { determineTrend } = require('../utils/trendUtils');
+const { getCache, setCache } = require('./cacheService');
 
 /**
  * Fetches stock data for a given ticker (NSE Indian stocks only).
  * Returns structured JSON with price, DMA, and trend data.
  */
 const getStockData = async (ticker) => {
-    // Ensure ticker is in NSE format (TICKER.NS)
     const nseTicker = ticker.toUpperCase().endsWith('.NS')
         ? ticker.toUpperCase()
         : ticker.toUpperCase() + '.NS';
+
+    const cacheKey = `price_${nseTicker}`;
+    const cachedData = getCache(cacheKey);
+
+    if (cachedData) {
+        console.log(`[CACHE HIT] Returning cached price data for ${nseTicker}`);
+        return cachedData;
+    }
+
+    console.log(`[CACHE MISS] Fetching price data from Yahoo for ${nseTicker}`);
 
     // Calculate date range (1 year ago to today)
     const endDate = new Date();
@@ -60,7 +70,7 @@ const getStockData = async (ticker) => {
         ? determineTrend(latestClose, dma50, dma200)
         : 'Insufficient Data';
 
-    return {
+    const responseData = {
         ticker: nseTicker,
         latestClose,
         currency,
@@ -70,6 +80,10 @@ const getStockData = async (ticker) => {
         dma200,
         trend
     };
+
+    // Cache price data for 1 hour (3600 seconds)
+    setCache(cacheKey, responseData, 3600);
+    return responseData;
 };
 
 module.exports = { getStockData };

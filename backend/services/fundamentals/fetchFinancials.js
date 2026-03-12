@@ -1,5 +1,6 @@
 const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
+const { getCache, setCache } = require('../cacheService');
 
 /**
  * Fetch raw financial data from Yahoo Finance for an NSE ticker.
@@ -13,10 +14,19 @@ const yahooFinance = new YahooFinance();
  * to restore balance-sheet and cash-flow data deprecated in quoteSummary.
  */
 const fetchFinancials = async (ticker) => {
-    // Normalize ticker to NSE format
     const nseTicker = ticker.toUpperCase().endsWith('.NS')
         ? ticker.toUpperCase()
         : ticker.toUpperCase() + '.NS';
+
+    const cacheKey = `fundamentals_${nseTicker}`;
+    const cachedData = getCache(cacheKey);
+
+    if (cachedData) {
+        console.log(`[CACHE HIT] Returning cached fundamentals data for ${nseTicker}`);
+        return cachedData;
+    }
+
+    console.log(`[CACHE MISS] Fetching fundamentals data from Yahoo for ${nseTicker}`);
 
     const modules = [
         'summaryDetail',
@@ -93,7 +103,7 @@ const fetchFinancials = async (ticker) => {
     const cashflow =
         result.cashflowStatementHistory?.cashflowStatements || [];
 
-    return {
+    const responseData = {
         ticker: nseTicker,
         quote,
         incomeAnnual,
@@ -102,6 +112,10 @@ const fetchFinancials = async (ticker) => {
         cashflow,
         timeSeries,
     };
+
+    // Cache fundamentals data for 24 hours (86400 seconds)
+    setCache(cacheKey, responseData, 86400);
+    return responseData;
 };
 
 module.exports = { fetchFinancials };

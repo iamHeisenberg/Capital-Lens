@@ -90,6 +90,27 @@ export function getPegColor(value) {
     return COLORS.red;
 }
 
+// ─── EV / EBITDA ──────────────────────────────────────────────
+export function getEvEbitdaColor(value) {
+    if (value == null) return COLORS.neutral;
+    if (value < 8) return COLORS.amber;
+    if (value <= 25) return COLORS.green;
+    if (value <= 35) return COLORS.amber;
+    return COLORS.red;
+}
+
+// ─── Market Cap / Sales ───────────────────────────────────────
+export function getMarketCapToSalesColor(value) {
+    if (value == null) return COLORS.neutral;
+    // For Indian compounders:
+    // < 3 is excellent
+    // 3 - 8 is typical/acceptable for high growth
+    // > 8 is significantly stretched unless software/platform
+    if (value < 3) return COLORS.green;
+    if (value <= 8) return COLORS.amber;
+    return COLORS.red;
+}
+
 // ─── Debt/Equity ─────────────────────────────────────────────
 export function getDebtEquityColor(value) {
     if (value == null) return COLORS.neutral;

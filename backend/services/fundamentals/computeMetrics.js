@@ -330,7 +330,12 @@ function computeValuation(financialData, keyStats, timeSeries, incomeAnnual, gro
         ? round(pe / profitCagr3y)
         : null;
 
-    return { pe, epsGrowthYoY, peg, peg3y, marketCapToSales };
+    // EV / EBITDA
+    const evToEbitda = keyStats.enterpriseToEbitda != null
+        ? round(keyStats.enterpriseToEbitda)
+        : null;
+
+    return { pe, epsGrowthYoY, peg, peg3y, evToEbitda, marketCapToSales };
 }
 
 // ─── Main Entry Point ─────────────────────────────────────────
