@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { fetchFinancials } = require('../services/fundamentals/fetchFinancials');
 const { computeMetrics } = require('../services/fundamentals/computeMetrics');
+const { calculateCompounderScore } = require('../services/scoring/compounderScore');
 
 /**
  * GET /api/fundamentals/:ticker
@@ -14,7 +15,8 @@ router.get('/fundamentals/:ticker', async (req, res) => {
         const { ticker } = req.params;
         const rawData = await fetchFinancials(ticker);
         const metrics = computeMetrics(rawData);
-        res.json(metrics);
+        const score = calculateCompounderScore(metrics);
+        res.json({ fundamentals: metrics, score });
     } catch (err) {
         const status = err.statusCode || 500;
         res.status(status).json({ error: err.message });

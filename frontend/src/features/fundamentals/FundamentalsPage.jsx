@@ -74,7 +74,7 @@ function FundamentalsPage() {
                             letterSpacing: '-0.01em',
                         }}
                     >
-                        {data.ticker}
+                        {data.fundamentals?.ticker || ticker}
                     </Typography>
                 </Box>
                 <Typography variant="body2">
@@ -91,11 +91,11 @@ function FundamentalsPage() {
                     alignItems: 'start',
                 }}
             >
-                <ValuationCard valuation={data.valuation} />
-                <GrowthCard growth={data.growth} />
-                <ProfitabilityCard profitability={data.profitability} />
-                <EfficiencyCard capitalEfficiency={data.capitalEfficiency} />
-                <BalanceSheetCard balanceSheet={data.balanceSheet} />
+                <ValuationCard valuation={data.fundamentals?.valuation} />
+                <GrowthCard growth={data.fundamentals?.growth} />
+                <ProfitabilityCard profitability={data.fundamentals?.profitability} />
+                <EfficiencyCard capitalEfficiency={data.fundamentals?.capitalEfficiency} />
+                <BalanceSheetCard balanceSheet={data.fundamentals?.balanceSheet} />
             </Box>
 
             {/* Data Source Footer */}
