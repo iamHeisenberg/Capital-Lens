@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import PageLayout from '../../components/layout/PageLayout';
 import useFundamentals from './hooks/useFundamentals';
+import CompounderScoreCard from './components/CompounderScoreCard';
 import ValuationCard from './components/ValuationCard';
 import GrowthCard from './components/GrowthCard';
 import ProfitabilityCard from './components/ProfitabilityCard';
@@ -13,8 +14,9 @@ function LoadingSkeleton() {
             <Box sx={{ py: 4 }}>
                 <Box className="skeleton-pulse" sx={{ height: 48, width: '60%', mb: 2 }} />
                 <Box className="skeleton-pulse" sx={{ height: 20, width: '40%', mb: 4 }} />
+                <Box className="skeleton-pulse" sx={{ height: 120, width: '100%', mb: 2 }} />
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                    {[...Array(6)].map((_, i) => (
+                    {[...Array(5)].map((_, i) => (
                         <Box key={i} className="skeleton-pulse" sx={{ flex: 1, height: 300 }} />
                     ))}
                 </Box>
@@ -82,6 +84,8 @@ function FundamentalsPage() {
                 </Typography>
             </Box>
 
+            <CompounderScoreCard score={data.score} />
+
             {/* 5 Cards — Single horizontal row */}
             <Box
                 sx={{
@@ -94,7 +98,10 @@ function FundamentalsPage() {
                 <ValuationCard valuation={data.fundamentals?.valuation} />
                 <GrowthCard growth={data.fundamentals?.growth} />
                 <ProfitabilityCard profitability={data.fundamentals?.profitability} />
-                <EfficiencyCard capitalEfficiency={data.fundamentals?.capitalEfficiency} />
+                <EfficiencyCard
+                    capitalEfficiency={data.fundamentals?.capitalEfficiency}
+                    efficiencyMetrics={data.score?.metrics?.capitalEfficiency}
+                />
                 <BalanceSheetCard balanceSheet={data.fundamentals?.balanceSheet} />
             </Box>
 
