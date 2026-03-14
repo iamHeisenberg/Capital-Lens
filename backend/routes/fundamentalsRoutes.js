@@ -22,7 +22,6 @@ router.get('/fundamentals/:ticker', async (req, res) => {
                 total: scoreResult.totalScore,
                 classification: scoreResult.classification,
                 breakdown: scoreResult.breakdown,
-                metrics: scoreResult.metrics,
             },
         });
     } catch (err) {

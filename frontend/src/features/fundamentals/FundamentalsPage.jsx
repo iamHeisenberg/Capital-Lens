@@ -98,10 +98,7 @@ function FundamentalsPage() {
                 <ValuationCard valuation={data.fundamentals?.valuation} />
                 <GrowthCard growth={data.fundamentals?.growth} />
                 <ProfitabilityCard profitability={data.fundamentals?.profitability} />
-                <EfficiencyCard
-                    capitalEfficiency={data.fundamentals?.capitalEfficiency}
-                    efficiencyMetrics={data.score?.metrics?.capitalEfficiency}
-                />
+                <EfficiencyCard capitalEfficiency={data.fundamentals?.capitalEfficiency} />
                 <BalanceSheetCard balanceSheet={data.fundamentals?.balanceSheet} />
             </Box>
 
