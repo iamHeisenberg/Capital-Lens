@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import MetricBlock from './MetricBlock';
+import ScoreBreakdown from './ScoreBreakdown';
 import { getRoeColor, getRoceColor, getCfoEbitdaColor } from '../utils/getMetricColor';
 
 /**
  * Capital Efficiency metrics card — ROE, ROCE, CFO/EBITDA.
  * Thresholds designed to identify long-term compounders.
  */
-function EfficiencyCard({ capitalEfficiency }) {
+function EfficiencyCard({ capitalEfficiency, metricScores }) {
+    const [showBreakdown, setShowBreakdown] = useState(false);
     const { roe, roce, cfoToEbitda } = capitalEfficiency || {};
 
     return (
@@ -23,6 +26,22 @@ function EfficiencyCard({ capitalEfficiency }) {
                 <MetricBlock label="Return on Capital Employed" value={roce} suffix="%" color={getRoceColor(roce)} />
                 <MetricBlock label="CFO / EBITDA" value={cfoToEbitda} format="ratio" color={getCfoEbitdaColor(cfoToEbitda)} />
             </Box>
+            {metricScores && (
+                <Box sx={{ mt: 1.5 }}>
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            color: '#9ca3af',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                        }}
+                        onClick={() => setShowBreakdown((prev) => !prev)}
+                    >
+                        {showBreakdown ? 'Hide breakdown' : 'Show breakdown'}
+                    </Typography>
+                    {showBreakdown && <ScoreBreakdown metrics={metricScores} category="capitalEfficiency" />}
+                </Box>
+            )}
         </Box>
     );
 }

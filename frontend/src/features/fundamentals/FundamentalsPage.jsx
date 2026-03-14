@@ -95,11 +95,26 @@ function FundamentalsPage() {
                     alignItems: 'start',
                 }}
             >
-                <ValuationCard valuation={data.fundamentals?.valuation} />
-                <GrowthCard growth={data.fundamentals?.growth} />
-                <ProfitabilityCard profitability={data.fundamentals?.profitability} />
-                <EfficiencyCard capitalEfficiency={data.fundamentals?.capitalEfficiency} />
-                <BalanceSheetCard balanceSheet={data.fundamentals?.balanceSheet} />
+                <ValuationCard
+                    valuation={data.fundamentals?.valuation}
+                    metricScores={data.score?.metricBreakdown?.valuation}
+                />
+                <GrowthCard
+                    growth={data.fundamentals?.growth}
+                    metricScores={data.score?.metricBreakdown?.growth}
+                />
+                <ProfitabilityCard
+                    profitability={data.fundamentals?.profitability}
+                    metricScores={data.score?.metricBreakdown?.profitability}
+                />
+                <EfficiencyCard
+                    capitalEfficiency={data.fundamentals?.capitalEfficiency}
+                    metricScores={data.score?.metricBreakdown?.capitalEfficiency}
+                />
+                <BalanceSheetCard
+                    balanceSheet={data.fundamentals?.balanceSheet}
+                    metricScores={data.score?.metricBreakdown?.balanceSheet}
+                />
             </Box>
 
             {/* Data Source Footer */}

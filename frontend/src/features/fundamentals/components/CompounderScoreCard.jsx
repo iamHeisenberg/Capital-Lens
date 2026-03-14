@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import { getScoreColor } from '../../../utils/scoreColor';
+import { SCORE_WEIGHTS } from '../../../constants/scoreWeights';
 
 function CompounderScoreCard({ score }) {
     const total = score?.total ?? null;
@@ -68,12 +69,12 @@ function CompounderScoreCard({ score }) {
                     }}
                 >
                     {[
-                        ['Valuation', breakdown.valuation],
-                        ['Growth', breakdown.growth],
-                        ['Profitability', breakdown.profitability],
-                        ['Efficiency', breakdown.capitalEfficiency],
-                        ['Balance', breakdown.balanceSheet],
-                    ].map(([label, value]) => (
+                        ['Valuation', breakdown.valuation, SCORE_WEIGHTS.valuation],
+                        ['Growth', breakdown.growth, SCORE_WEIGHTS.growth],
+                        ['Profitability', breakdown.profitability, SCORE_WEIGHTS.profitability],
+                        ['Efficiency', breakdown.capitalEfficiency, SCORE_WEIGHTS.capitalEfficiency],
+                        ['Balance', breakdown.balanceSheet, SCORE_WEIGHTS.balanceSheet],
+                    ].map(([label, value, max]) => (
                         <Box
                             key={label}
                             sx={{
@@ -96,7 +97,7 @@ function CompounderScoreCard({ score }) {
                                 {label}
                             </Typography>
                             <Typography sx={{ fontSize: '1rem', fontWeight: 800, color: '#e8e8ed' }}>
-                                {value ?? '—'}
+                                {value ?? '—'} / {max}
                             </Typography>
                         </Box>
                     ))}

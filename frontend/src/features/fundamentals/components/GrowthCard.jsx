@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import { Box, Typography, Divider } from '@mui/material';
 import MetricBlock from './MetricBlock';
+import ScoreBreakdown from './ScoreBreakdown';
 import { getSalesGrowthColor, getProfitGrowthColor } from '../utils/getMetricColor';
 
 /**
  * Growth metrics card — Sales & Profit growth stacked vertically.
  * 5Y CAGR excluded due to Yahoo Finance API limitations.
  */
-function GrowthCard({ growth }) {
+function GrowthCard({ growth, metricScores }) {
     const sales = growth?.sales || {};
     const profit = growth?.profit || {};
+    const [showBreakdown, setShowBreakdown] = useState(false);
 
     return (
         <Box
@@ -61,6 +64,22 @@ function GrowthCard({ growth }) {
                 <MetricBlock label="YoY" value={profit.yoy} suffix="%" color={getProfitGrowthColor(profit.yoy)} />
                 <MetricBlock label="3Y CAGR" value={profit.cagr3y} suffix="%" color={getProfitGrowthColor(profit.cagr3y)} />
             </Box>
+            {metricScores && (
+                <Box sx={{ mt: 1.5 }}>
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            color: '#9ca3af',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                        }}
+                        onClick={() => setShowBreakdown((prev) => !prev)}
+                    >
+                        {showBreakdown ? 'Hide breakdown' : 'Show breakdown'}
+                    </Typography>
+                    {showBreakdown && <ScoreBreakdown metrics={metricScores} category="growth" />}
+                </Box>
+            )}
         </Box>
     );
 }
