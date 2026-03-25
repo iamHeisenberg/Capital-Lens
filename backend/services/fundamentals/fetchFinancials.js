@@ -1,6 +1,9 @@
+'use strict';
+
 const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 const { getCache, setCache } = require('../cacheService');
+const logger = require('../../utils/logger');
 
 /**
  * Fetch raw financial data from Yahoo Finance for an NSE ticker.
@@ -12,21 +15,26 @@ const { getCache, setCache } = require('../cacheService');
  *
  * `timeSeries` is fetched via fundamentalsTimeSeries (annual, module: 'all')
  * to restore balance-sheet and cash-flow data deprecated in quoteSummary.
+ *
+ * @param {string} ticker
+ * @param {object} [ctx]  - request context { correlationId, endpoint, method }
  */
-const fetchFinancials = async (ticker) => {
+const fetchFinancials = async (ticker, ctx = {}) => {
     const nseTicker = ticker.toUpperCase().endsWith('.NS')
         ? ticker.toUpperCase()
         : ticker.toUpperCase() + '.NS';
+
+    const logCtx = { ...ctx, ticker: nseTicker };
 
     const cacheKey = `fundamentals_${nseTicker}`;
     const cachedData = getCache(cacheKey);
 
     if (cachedData) {
-        console.log(`[CACHE HIT] Returning cached fundamentals data for ${nseTicker}`);
+        logger.info('Cache hit — returning cached fundamentals data', logCtx);
         return cachedData;
     }
 
-    console.log(`[CACHE MISS] Fetching fundamentals data from Yahoo for ${nseTicker}`);
+    logger.info('Cache miss — fetching fundamentals from Yahoo Finance', logCtx);
 
     const modules = [
         'summaryDetail',
@@ -38,27 +46,63 @@ const fetchFinancials = async (ticker) => {
         'cashflowStatementHistory',
     ];
 
-    // ── 1. quoteSummary (existing) ──────────────────────────────
+    // ── 1. quoteSummary ────────────────────────────────────────────────────────
     let result;
+    const t1 = Date.now();
+    logger.info('Calling external API — quoteSummary', logCtx, { modules });
+
     try {
         result = await yahooFinance.quoteSummary(nseTicker, { modules });
+        const latencyMs = Date.now() - t1;
+
+        if (!result) {
+            const error = new Error(`No financial data found for ${nseTicker}`);
+            error.statusCode = 404;
+            throw error;
+        }
+
+        // Build a high-level summary — never log the full payload
+        const incomeRows = result.incomeStatementHistory?.incomeStatementHistory || [];
+        const balanceRows = result.balanceSheetHistory?.balanceSheetStatements || [];
+        const cashflowRows = result.cashflowStatementHistory?.cashflowStatements || [];
+
+        const missingFields = [];
+        if (!incomeRows.length) missingFields.push('incomeStatementHistory');
+        if (!balanceRows.length) missingFields.push('balanceSheetStatements');
+        if (!cashflowRows.length) missingFields.push('cashflowStatements');
+        if (!result.financialData?.totalRevenue) missingFields.push('totalRevenue');
+        if (!result.financialData?.netIncomeToCommon) missingFields.push('netIncomeToCommon');
+
+        const summary = {
+            hasRevenue: !!result.financialData?.totalRevenue,
+            hasNetIncome: !!result.financialData?.netIncomeToCommon,
+            incomeRows: incomeRows.length,
+            balanceRows: balanceRows.length,
+            cashflowRows: cashflowRows.length,
+            missingFields,
+        };
+
+        logger.info('External API response received — quoteSummary', { ...logCtx, latencyMs }, summary);
+
+        if (missingFields.length > 0) {
+            logger.warn('Partial data received from external API — quoteSummary', logCtx, { missingFields });
+        }
     } catch (err) {
+        const latencyMs = Date.now() - t1;
+        logger.error('External API call failed — quoteSummary', { ...logCtx, latencyMs }, {
+            errorMessage: err.message,
+            stack: err.stack,
+        });
         const error = new Error(`Failed to fetch financials for ${nseTicker}: ${err.message}`);
-        error.statusCode = 502;
+        error.statusCode = err.statusCode || 502;
         throw error;
     }
 
-    if (!result) {
-        const error = new Error(`No financial data found for ${nseTicker}`);
-        error.statusCode = 404;
-        throw error;
-    }
-
-    // ── 2. fundamentalsTimeSeries (new) ─────────────────────────
-    // Fetches annual balance-sheet, income, and cash-flow data
-    // over the last 6 years. Uses { validateResult: false } to
-    // work around a known schema-validation issue for Indian stocks.
+    // ── 2. fundamentalsTimeSeries ──────────────────────────────────────────────
     let timeSeries = [];
+    const t2 = Date.now();
+    logger.info('Calling external API — fundamentalsTimeSeries', logCtx);
+
     try {
         const endDate = new Date();
         const startDate = new Date();
@@ -71,6 +115,8 @@ const fetchFinancials = async (ticker) => {
             period2: endDate,
         }, { validateResult: false });
 
+        const latencyMs = Date.now() - t2;
+
         // Sort by date ascending (oldest first)
         timeSeries = (tsRaw || [])
             .filter((e) => e.totalAssets != null || e.operatingCashFlow != null || e.EBIT != null)
@@ -79,12 +125,28 @@ const fetchFinancials = async (ticker) => {
                 const db = b.date instanceof Date ? b.date.getTime() : b.date * 1000;
                 return da - db;
             });
+
+        const missingTs = [];
+        if (!timeSeries.some(e => e.totalAssets != null)) missingTs.push('totalAssets');
+        if (!timeSeries.some(e => e.operatingCashFlow != null)) missingTs.push('operatingCashFlow');
+
+        logger.info('External API response received — fundamentalsTimeSeries', { ...logCtx, latencyMs }, {
+            rowCount: timeSeries.length,
+            missingFields: missingTs,
+        });
+
+        if (missingTs.length > 0) {
+            logger.warn('Partial data received from external API — fundamentalsTimeSeries', logCtx, { missingFields: missingTs });
+        }
     } catch (err) {
+        const latencyMs = Date.now() - t2;
         // Non-fatal: time series is supplementary data
-        console.warn(`[fetchFinancials] fundamentalsTimeSeries unavailable for ${nseTicker}: ${err.message}`);
+        logger.warn('External API call failed (non-fatal) — fundamentalsTimeSeries', { ...logCtx, latencyMs }, {
+            errorMessage: err.message,
+        });
     }
 
-    // ── 3. Extract & normalize ──────────────────────────────────
+    // ── 3. Extract & normalize ─────────────────────────────────────────────────
     const quote = {
         summaryDetail: result.summaryDetail || {},
         financialData: result.financialData || {},
@@ -115,6 +177,7 @@ const fetchFinancials = async (ticker) => {
 
     // Cache fundamentals data for 24 hours (86400 seconds)
     setCache(cacheKey, responseData, 86400);
+    logger.info('Fundamentals data cached', logCtx);
     return responseData;
 };
 
