@@ -44,7 +44,7 @@ function StockAnalysisPage() {
         return <AnalysisDefault />;
     }
 
-    if (loading) {
+    if (loading || !data) {
         return <LoadingSkeleton />;
     }
 
