@@ -3,13 +3,14 @@ import {
     Typography,
     Grid
 } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import PageLayout from '../../components/layout/PageLayout';
 import useStockData from './hooks/useStockData';
 import { calcDistance, getInterpretation } from './utils/interpretation';
 import PriceCard from './components/PriceCard';
 import TrendCard from './components/TrendCard';
 import InterpretationCard from './components/InterpretationCard';
+import AnalysisDefault from './components/AnalysisDefault';
 
 function LoadingSkeleton() {
     return (
@@ -34,8 +35,14 @@ function LoadingSkeleton() {
 }
 
 function StockAnalysisPage() {
-    const ticker = 'RELIANCE.NS';
+    const { ticker: rawTicker } = useParams();
+    const ticker = rawTicker?.toUpperCase();
     const { data, loading, error } = useStockData(ticker);
+
+    // No ticker in URL — show default landing page
+    if (!ticker) {
+        return <AnalysisDefault />;
+    }
 
     if (loading) {
         return <LoadingSkeleton />;
@@ -52,6 +59,9 @@ function StockAnalysisPage() {
                         borderLeft: '3px solid #ef4444',
                     }}
                 >
+                    <Typography sx={{ color: '#5a5a6e', fontSize: '0.8rem', mb: 1 }}>
+                        {ticker}
+                    </Typography>
                     <Typography sx={{ color: '#ef4444', fontWeight: 500 }}>
                         {error}
                     </Typography>
@@ -122,7 +132,7 @@ function StockAnalysisPage() {
 
             {/* Cross-links */}
             <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Link to="/fundamentals" style={{ textDecoration: 'none' }}>
+                <Link to={`/fundamentals/${ticker}`} style={{ textDecoration: 'none' }}>
                     <Typography
                         variant="body2"
                         sx={{

@@ -1,8 +1,9 @@
 import { Box, Container, Typography } from '@mui/material';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import GlobalSearchBar from '../search/GlobalSearchBar';
 
 const navLinks = [
-    { label: 'Home', path: '/' },
+    { label: 'Home', path: '/', exact: true },
     { label: 'Analysis', path: '/analysis' },
     { label: 'Fundamentals', path: '/fundamentals' },
     { label: 'Methodology', path: '/methodology' },
@@ -10,6 +11,24 @@ const navLinks = [
 
 function Navbar() {
     const location = useLocation();
+    const navigate = useNavigate();
+
+    // Extract ticker from URL segments like /analysis/TCS.NS or /fundamentals/TCS.NS
+    const pathParts = location.pathname.split('/');
+    const currentTicker = pathParts.length === 3 && pathParts[2] ? pathParts[2] : null;
+
+    const isActive = (link) =>
+        link.exact
+            ? location.pathname === link.path
+            : location.pathname.startsWith(link.path);
+
+    // Generate the correct target path for context-aware nav links
+    const getNavTarget = (link) => {
+        if (currentTicker && (link.path === '/analysis' || link.path === '/fundamentals')) {
+            return `${link.path}/${currentTicker}`;
+        }
+        return link.path;
+    };
 
     return (
         <Box
@@ -30,11 +49,13 @@ function Navbar() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    py: 2.5,
+                    py: 1.75,
                     px: { xs: 2, md: 4 },
+                    gap: 2,
                 }}
             >
-                <Link to="/" style={{ textDecoration: 'none' }}>
+                {/* Logo */}
+                <Link to="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
                     <Typography
                         sx={{
                             fontSize: '1.05rem',
@@ -49,25 +70,34 @@ function Navbar() {
                     </Typography>
                 </Link>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {/* Search Bar — center, hidden on mobile */}
+                <Box sx={{ display: { xs: 'none', sm: 'flex' }, flexGrow: 1, justifyContent: 'center' }}>
+                    <GlobalSearchBar />
+                </Box>
+
+                {/* Nav links + NSE indicator */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 4 }, flexShrink: 0 }}>
                     {navLinks.map((link) => {
-                        const isActive = location.pathname === link.path;
+                        const active = isActive(link);
+                        const target = getNavTarget(link);
                         return (
-                            <Link
+                            <Box
                                 key={link.path}
-                                to={link.path}
-                                style={{ textDecoration: 'none' }}
+                                component="span"
+                                onClick={() => navigate(target)}
+                                sx={{ cursor: 'pointer' }}
                             >
                                 <Typography
                                     sx={{
                                         fontSize: '0.8rem',
-                                        fontWeight: isActive ? 500 : 400,
-                                        color: isActive ? '#e8e8ed' : '#5a5a6e',
+                                        fontWeight: active ? 500 : 400,
+                                        color: active ? '#e8e8ed' : '#5a5a6e',
                                         letterSpacing: '0.04em',
                                         transition: 'color 0.2s',
                                         position: 'relative',
+                                        display: { xs: 'none', md: 'block' },
                                         '&:hover': { color: '#8a8a9a' },
-                                        '&::after': isActive
+                                        '&::after': active
                                             ? {
                                                 content: '""',
                                                 position: 'absolute',
@@ -82,7 +112,7 @@ function Navbar() {
                                 >
                                     {link.label}
                                 </Typography>
-                            </Link>
+                            </Box>
                         );
                     })}
 
@@ -91,8 +121,8 @@ function Navbar() {
                             display: 'flex',
                             alignItems: 'center',
                             gap: 1,
-                            pl: 3,
-                            borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+                            pl: { xs: 0, md: 3 },
+                            borderLeft: { xs: 'none', md: '1px solid rgba(255, 255, 255, 0.06)' },
                         }}
                     >
                         <Box

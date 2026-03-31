@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const validateTicker = require('../middleware/validateTicker');
 const { fetchFinancials } = require('../services/fundamentals/fetchFinancials');
 const { computeMetrics } = require('../services/fundamentals/computeMetrics');
 const { calculateCompounderScore } = require('../services/scoring/compounderScore');
@@ -11,8 +12,8 @@ const logger = require('../utils/logger');
  * Production endpoint — returns computed fundamental metrics.
  * No raw data, no debug fields, no statement counts.
  */
-router.get('/fundamentals/:ticker', async (req, res) => {
-    const { ticker } = req.params;
+router.get('/fundamentals/:ticker', validateTicker, async (req, res) => {
+    const ticker = req.ticker;
     const ctx = {
         correlationId: req.correlationId,
         endpoint: req.originalUrl,

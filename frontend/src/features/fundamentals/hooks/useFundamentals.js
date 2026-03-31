@@ -12,6 +12,14 @@ const useFundamentals = (ticker) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        // Don't fetch if ticker is missing
+        if (!ticker) {
+            setData(null);
+            setLoading(false);
+            setError(null);
+            return;
+        }
+
         setLoading(true);
         setError(null);
 

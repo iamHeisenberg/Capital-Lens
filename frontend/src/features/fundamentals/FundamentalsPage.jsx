@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material';
+import { useParams, Link } from 'react-router-dom';
 import PageLayout from '../../components/layout/PageLayout';
 import useFundamentals from './hooks/useFundamentals';
 import CompounderScoreCard from './components/CompounderScoreCard';
@@ -7,6 +8,7 @@ import GrowthCard from './components/GrowthCard';
 import ProfitabilityCard from './components/ProfitabilityCard';
 import EfficiencyCard from './components/EfficiencyCard';
 import BalanceSheetCard from './components/BalanceSheetCard';
+import FundamentalsDefault from './components/FundamentalsDefault';
 
 function LoadingSkeleton() {
     return (
@@ -26,8 +28,14 @@ function LoadingSkeleton() {
 }
 
 function FundamentalsPage() {
-    const ticker = 'RELIANCE.NS';
+    const { ticker: rawTicker } = useParams();
+    const ticker = rawTicker?.toUpperCase();
     const { data, loading, error } = useFundamentals(ticker);
+
+    // No ticker in URL — show default landing page
+    if (!ticker) {
+        return <FundamentalsDefault />;
+    }
 
     if (loading) {
         return <LoadingSkeleton />;
@@ -40,6 +48,9 @@ function FundamentalsPage() {
                     className="glass-card"
                     sx={{ p: 4, mt: 4, borderLeft: '3px solid #ef4444' }}
                 >
+                    <Typography sx={{ color: '#5a5a6e', fontSize: '0.8rem', mb: 1 }}>
+                        {ticker}
+                    </Typography>
                     <Typography sx={{ color: '#ef4444', fontWeight: 500 }}>
                         {error}
                     </Typography>
@@ -79,9 +90,19 @@ function FundamentalsPage() {
                         {data.fundamentals?.ticker || ticker}
                     </Typography>
                 </Box>
-                <Typography variant="body2">
-                    Source: Yahoo Finance (Consolidated)
-                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                    <Typography variant="body2">
+                        Source: Yahoo Finance (Consolidated)
+                    </Typography>
+                    <Link to={`/analysis/${ticker}`} style={{ textDecoration: 'none' }}>
+                        <Typography
+                            variant="caption"
+                            sx={{ color: '#22c55e', '&:hover': { opacity: 0.7 } }}
+                        >
+                            View Analysis →
+                        </Typography>
+                    </Link>
+                </Box>
             </Box>
 
             <CompounderScoreCard score={data.score} />

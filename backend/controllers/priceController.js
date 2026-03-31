@@ -5,7 +5,7 @@ const logger = require('../utils/logger');
  * Controller for price-related endpoints.
  */
 const getPrice = async (req, res) => {
-    const { ticker } = req.params;
+    const ticker = req.ticker;
     const ctx = {
         correlationId: req.correlationId,
         endpoint: req.originalUrl,

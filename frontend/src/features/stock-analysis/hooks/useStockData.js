@@ -3,15 +3,28 @@ import { fetchStockData } from '../services/stockApi';
 
 /**
  * Hook for fetching and managing stock data state.
- * @param {string} ticker - Stock ticker symbol
+ * @param {string|undefined} ticker - Stock ticker symbol
  * @returns {{ data: Object|null, loading: boolean, error: string|null }}
  */
 const useStockData = (ticker) => {
     const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        // Don't fetch if ticker is missing
+        if (!ticker) {
+            setData(null);
+            setLoading(false);
+            setError(null);
+            return;
+        }
+
+        // Reset state on each ticker change (fixes stale data on re-fetch)
+        setLoading(true);
+        setError(null);
+        setData(null);
+
         fetchStockData(ticker)
             .then((result) => {
                 setData(result);
