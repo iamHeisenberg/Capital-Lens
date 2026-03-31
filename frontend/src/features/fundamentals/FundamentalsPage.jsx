@@ -37,7 +37,7 @@ function FundamentalsPage() {
         return <FundamentalsDefault />;
     }
 
-    if (loading) {
+    if (loading || !data) {
         return <LoadingSkeleton />;
     }
 
