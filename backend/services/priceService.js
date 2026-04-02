@@ -2,7 +2,7 @@ const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 const { calculateDMA } = require('../utils/dmaUtils');
 const { determineTrend } = require('../utils/trendUtils');
-const { getCache, setCache } = require('./cacheService');
+const { getCache, setCache, cacheKeys } = require('./cacheService');
 
 /**
  * Fetches stock data for a given ticker (NSE Indian stocks only).
@@ -13,11 +13,10 @@ const getStockData = async (ticker) => {
         ? ticker.toUpperCase()
         : ticker.toUpperCase() + '.NS';
 
-    const cacheKey = `price_${nseTicker}`;
-    const cachedData = getCache(cacheKey);
+    const cacheKey = cacheKeys.price(nseTicker);
+    const cachedData = await getCache(cacheKey);
 
     if (cachedData) {
-        console.log(`[CACHE HIT] Returning cached price data for ${nseTicker}`);
         return cachedData;
     }
 
@@ -82,7 +81,7 @@ const getStockData = async (ticker) => {
     };
 
     // Cache price data for 1 hour (3600 seconds)
-    setCache(cacheKey, responseData, 3600);
+    await setCache(cacheKey, responseData, 3600);
     return responseData;
 };
 

@@ -2,7 +2,7 @@
 
 const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
-const { getCache, setCache } = require('../cacheService');
+const { getCache, setCache, cacheKeys } = require('../cacheService');
 const logger = require('../../utils/logger');
 
 /**
@@ -26,11 +26,10 @@ const fetchFinancials = async (ticker, ctx = {}) => {
 
     const logCtx = { ...ctx, ticker: nseTicker };
 
-    const cacheKey = `fundamentals_${nseTicker}`;
-    const cachedData = getCache(cacheKey);
+    const cacheKey = cacheKeys.fundamentals(nseTicker);
+    const cachedData = await getCache(cacheKey, logCtx);
 
     if (cachedData) {
-        logger.info('Cache hit — returning cached fundamentals data', logCtx);
         return cachedData;
     }
 
@@ -176,8 +175,7 @@ const fetchFinancials = async (ticker, ctx = {}) => {
     };
 
     // Cache fundamentals data for 24 hours (86400 seconds)
-    setCache(cacheKey, responseData, 86400);
-    logger.info('Fundamentals data cached', logCtx);
+    await setCache(cacheKey, responseData, 86400, logCtx);
     return responseData;
 };
 
