@@ -2,6 +2,7 @@
 
 const { Redis } = require('@upstash/redis');
 const logger = require('../utils/logger');
+const { CACHE_VERSION } = require('../config/cacheConfig');
 
 const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL,
@@ -36,11 +37,10 @@ const getCache = async (key, ctx = {}) => {
             return null;
         }
         logger.info('Cache hit', { ...ctx, event: 'CACHE_HIT', key });
-        // Upstash REST client returns already-parsed JSON; handle both cases.
         return typeof raw === 'string' ? JSON.parse(raw) : raw;
     } catch (err) {
         logger.error('Cache get failed — treating as miss', { ...ctx, key, error: err.message });
-        return null; // Fail-open: API continues without cache
+        return null;
     }
 };
 
@@ -76,12 +76,14 @@ const clearCache = async (key, ctx = {}) => {
 };
 
 /**
- * Canonical key builders — enforce colon-namespace convention.
- * e.g. price:TCS.NS  /  fundamentals:TCS.NS
+ * Canonical key builders — enforce version:namespace:ticker convention.
+ * e.g. v1:price:TCS.NS  /  v1:fundamentals:TCS.NS
+ *
+ * Bump CACHE_VERSION in config/cacheConfig.js to invalidate all cached data.
  */
 const cacheKeys = {
-    price: (ticker) => `price:${ticker.toUpperCase()}`,
-    fundamentals: (ticker) => `fundamentals:${ticker.toUpperCase()}`,
+    price: (ticker) => `${CACHE_VERSION}:price:${ticker.toUpperCase()}`,
+    fundamentals: (ticker) => `${CACHE_VERSION}:fundamentals:${ticker.toUpperCase()}`,
 };
 
 module.exports = { getCache, setCache, clearCache, cacheKeys };

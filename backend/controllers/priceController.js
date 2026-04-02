@@ -6,6 +6,10 @@ const logger = require('../utils/logger');
  */
 const getPrice = async (req, res) => {
     const ticker = req.ticker;
+    // ?refresh=true bypasses cache and forces a fresh Yahoo Finance fetch.
+    // Any value other than the string "true" is treated as false (edge case safe).
+    const forceRefresh = req.query.refresh === 'true';
+
     const ctx = {
         correlationId: req.correlationId,
         endpoint: req.originalUrl,
@@ -13,8 +17,15 @@ const getPrice = async (req, res) => {
         ticker: ticker.toUpperCase(),
     };
 
+    if (forceRefresh) {
+        logger.info('Cache bypass requested', {
+            ...ctx,
+            event: 'CACHE_BYPASS_FORCE_REFRESH',
+        });
+    }
+
     try {
-        const data = await getStockData(ticker);
+        const data = await getStockData(ticker, { forceRefresh, ctx });
         res.json(data);
     } catch (err) {
         const statusCode = err.statusCode || 500;
@@ -28,4 +39,3 @@ const getPrice = async (req, res) => {
 };
 
 module.exports = { getPrice };
-

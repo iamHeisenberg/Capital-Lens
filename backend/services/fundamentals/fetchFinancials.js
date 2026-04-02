@@ -17,9 +17,10 @@ const logger = require('../../utils/logger');
  * to restore balance-sheet and cash-flow data deprecated in quoteSummary.
  *
  * @param {string} ticker
- * @param {object} [ctx]  - request context { correlationId, endpoint, method }
+ * @param {object} [ctx]          - request context { correlationId, endpoint, method }
+ * @param {boolean} [forceRefresh] - Skip cache read when true (?refresh=true)
  */
-const fetchFinancials = async (ticker, ctx = {}) => {
+const fetchFinancials = async (ticker, ctx = {}, forceRefresh = false) => {
     const nseTicker = ticker.toUpperCase().endsWith('.NS')
         ? ticker.toUpperCase()
         : ticker.toUpperCase() + '.NS';
@@ -27,10 +28,19 @@ const fetchFinancials = async (ticker, ctx = {}) => {
     const logCtx = { ...ctx, ticker: nseTicker };
 
     const cacheKey = cacheKeys.fundamentals(nseTicker);
-    const cachedData = await getCache(cacheKey, logCtx);
 
-    if (cachedData) {
-        return cachedData;
+    // ── Cache read (skipped when forceRefresh=true) ────────────────────────────
+    if (!forceRefresh) {
+        const cachedData = await getCache(cacheKey, logCtx);
+        if (cachedData) {
+            return cachedData;
+        }
+    } else {
+        logger.info('Cache read skipped — forceRefresh active', {
+            ...logCtx,
+            event: 'CACHE_SKIP_READ',
+            key: cacheKey,
+        });
     }
 
     logger.info('Cache miss — fetching fundamentals from Yahoo Finance', logCtx);
@@ -174,8 +184,29 @@ const fetchFinancials = async (ticker, ctx = {}) => {
         timeSeries,
     };
 
-    // Cache fundamentals data for 24 hours (86400 seconds)
-    await setCache(cacheKey, responseData, 86400, logCtx);
+    // ── Cache validation guard ─────────────────────────────────────────────────
+    // Fundamentals are only worth caching when the core income data is present.
+    // Empty incomeAnnual means Yahoo returned a partial/invalid response.
+    const isValidForCache =
+        responseData &&
+        !responseData.error &&
+        Array.isArray(responseData.incomeAnnual) &&
+        responseData.incomeAnnual.length > 0 &&
+        responseData.quote &&
+        Object.keys(responseData.quote).length > 0;
+
+    if (isValidForCache) {
+        // Cache fundamentals data for 24 hours (86400 seconds)
+        await setCache(cacheKey, responseData, 86400, logCtx);
+    } else {
+        logger.warn('SKIP_CACHE_INVALID_DATA — fundamentals data failed validation', {
+            ...logCtx,
+            event: 'SKIP_CACHE_INVALID_DATA',
+            reason: 'incomeAnnual is empty or quote is missing',
+            incomeRows: responseData?.incomeAnnual?.length ?? 0,
+        });
+    }
+
     return responseData;
 };
 

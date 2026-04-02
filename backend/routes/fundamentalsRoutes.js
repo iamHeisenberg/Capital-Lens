@@ -14,6 +14,9 @@ const logger = require('../utils/logger');
  */
 router.get('/fundamentals/:ticker', validateTicker, async (req, res) => {
     const ticker = req.ticker;
+    // ?refresh=true bypasses cache and forces a fresh Yahoo Finance fetch.
+    const forceRefresh = req.query.refresh === 'true';
+
     const ctx = {
         correlationId: req.correlationId,
         endpoint: req.originalUrl,
@@ -21,8 +24,15 @@ router.get('/fundamentals/:ticker', validateTicker, async (req, res) => {
         ticker: ticker.toUpperCase(),
     };
 
+    if (forceRefresh) {
+        logger.info('Cache bypass requested', {
+            ...ctx,
+            event: 'CACHE_BYPASS_FORCE_REFRESH',
+        });
+    }
+
     try {
-        const rawData = await fetchFinancials(ticker, ctx);
+        const rawData = await fetchFinancials(ticker, ctx, forceRefresh);
         const metrics = computeMetrics(rawData);
         const scoreResult = calculateCompounderScore(metrics);
         res.json({
