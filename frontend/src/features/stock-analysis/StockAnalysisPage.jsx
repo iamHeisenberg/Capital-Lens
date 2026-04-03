@@ -10,6 +10,7 @@ import { calcDistance, getInterpretation } from './utils/interpretation';
 import PriceCard from './components/PriceCard';
 import TrendCard from './components/TrendCard';
 import InterpretationCard from './components/InterpretationCard';
+import PriceChartCard from './components/PriceChartCard';
 import AnalysisDefault from './components/AnalysisDefault';
 
 function LoadingSkeleton() {
@@ -114,6 +115,10 @@ function StockAnalysisPage() {
 
             {/* Main Grid */}
             <Grid container spacing={4}>
+                <PriceChartCard
+                    historicalCloses={data.historicalCloses}
+                    trend={data.trend}
+                />
                 <PriceCard
                     latestClose={data.latestClose}
                     dma50={data.dma50}
