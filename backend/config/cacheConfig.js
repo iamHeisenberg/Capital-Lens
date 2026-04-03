@@ -9,6 +9,6 @@
  *
  * Current key format: v1:price:TCS.NS  /  v1:fundamentals:TCS.NS
  */
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 
 module.exports = { CACHE_VERSION };

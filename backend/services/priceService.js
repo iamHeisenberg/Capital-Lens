@@ -5,14 +5,46 @@ const { determineTrend } = require('../utils/trendUtils');
 const { getCache, setCache, cacheKeys } = require('./cacheService');
 const logger = require('../utils/logger');
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 /**
- * Fetches stock data for a given ticker (NSE Indian stocks only).
- * Returns structured JSON with price, DMA, and trend data.
+ * O(N) sliding-window rolling average.
+ * Returns null for i < period-1 (insufficient history).
+ */
+function computeRollingMA(prices, period) {
+    const result = new Array(prices.length).fill(null);
+    let sum = 0;
+    for (let i = 0; i < prices.length; i++) {
+        sum += prices[i];
+        if (i >= period) sum -= prices[i - period];
+        if (i >= period - 1) result[i] = sum / period;
+    }
+    return result;
+}
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches stock data for a given NSE ticker.
+ *
+ * Strategy:
+ *   1. Fetch ~400 trading days (~2 years) of history
+ *   2. Compute rolling DMA50 + DMA200 on the FULL dataset
+ *   3. Return last 200 data points for display,
+ *      but DMA lines are accurate because they were computed on 2 years
+ *
+ * Response:
+ *   historicalCloses  — last 200 close prices      (backward-compat)
+ *   historicalDates   — last 200 date strings       (NEW, for X-axis)
+ *   dma50Series       — last 200 DMA50 values       (NEW, for chart)
+ *   dma200Series      — last 200 DMA200 values      (NEW, for chart)
+ *   dma50             — latest single DMA50 value   (backward-compat, for PriceCard)
+ *   dma200            — latest single DMA200 value  (backward-compat, for PriceCard)
  *
  * @param {string} ticker
  * @param {object} [options]
- * @param {boolean} [options.forceRefresh] - Skip cache read when true (?refresh=true)
- * @param {object}  [options.ctx]          - Request context for structured logging
+ * @param {boolean} [options.forceRefresh]
+ * @param {object}  [options.ctx]
  */
 const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => {
     const nseTicker = ticker.toUpperCase().endsWith('.NS')
@@ -21,24 +53,20 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
 
     const cacheKey = cacheKeys.price(nseTicker);
 
-    // ── Cache read (skipped when forceRefresh=true) ────────────────────────────
+    // ── Cache read ─────────────────────────────────────────────────────────────
     if (!forceRefresh) {
         const cachedData = await getCache(cacheKey, ctx);
-        if (cachedData) {
-            return cachedData;
-        }
+        if (cachedData) return cachedData;
     } else {
         logger.info('Cache read skipped — forceRefresh active', {
-            ...ctx,
-            event: 'CACHE_SKIP_READ',
-            key: cacheKey,
+            ...ctx, event: 'CACHE_SKIP_READ', key: cacheKey,
         });
     }
 
-    // ── Fetch from Yahoo Finance ───────────────────────────────────────────────
+    // ── Fetch 2 years of history (~400 trading days) ───────────────────────────
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setFullYear(startDate.getFullYear() - 1);
+    startDate.setFullYear(startDate.getFullYear() - 2); // 2 years
 
     const result = await yahooFinance.historical(nseTicker, {
         period1: startDate,
@@ -52,9 +80,20 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
         throw error;
     }
 
-    // Fetch quote for currency info
+    // Filter out days with null/invalid close (holidays, data gaps)
+    const validResult = result.filter(
+        (d) => d.close != null && typeof d.close === 'number' && isFinite(d.close)
+    );
+
+    if (!validResult.length) {
+        const error = new Error('No valid price data for ticker: ' + nseTicker);
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Fetch quote for currency check
     const quote = await yahooFinance.quote(nseTicker);
-    const currency = quote.currency || 'INR';
+    const currency = quote?.currency || 'INR';
 
     if (currency !== 'INR') {
         const error = new Error('Only INR stocks supported');
@@ -62,30 +101,62 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
         throw error;
     }
 
-    const historicalCloses = result.slice(-200).map((day) => day.close);
-    const latestData = result[result.length - 1];
-    const latestClose = latestData.close;
+    // ── Compute DMA on full dataset ────────────────────────────────────────────
+    const allCloses = validResult.map((d) => d.close);
+    const allDates  = validResult.map((d) => {
+        const dt = d.date instanceof Date ? d.date : new Date(d.date);
+        return dt.toISOString().split('T')[0]; // YYYY-MM-DD
+    });
 
-    const dma50 = calculateDMA(historicalCloses, 50);
-    const dma200 = calculateDMA(historicalCloses, 200);
+    const allDma50Series  = computeRollingMA(allCloses, 50);
+    const allDma200Series = computeRollingMA(allCloses, 200);
 
-    const trend = (dma50 !== null && dma200 !== null)
-        ? determineTrend(latestClose, dma50, dma200)
-        : 'Insufficient Data';
+    // ── Slice last 200 for display ─────────────────────────────────────────────
+    const DISPLAY_DAYS = 200;
+    const offset = Math.max(0, allCloses.length - DISPLAY_DAYS);
+
+    const historicalCloses = allCloses.slice(offset);
+    const historicalDates  = allDates.slice(offset);
+    const dma50Series      = allDma50Series.slice(offset);
+    const dma200Series     = allDma200Series.slice(offset);
+
+    // Single values for PriceCard / TrendCard (backward-compat)
+    const latestClose = historicalCloses[historicalCloses.length - 1];
+    const dma50       = allDma50Series[allDma50Series.length - 1];   // null if < 50 days
+    const dma200      = allDma200Series[allDma200Series.length - 1]; // null if < 200 days
+
+    // Detect trend — Sideways when DMAs are within 2% of each other
+    let trend;
+    if (dma50 == null || dma200 == null) {
+        trend = 'Insufficient Data';
+    } else {
+        const spreadPct = Math.abs(dma50 - dma200) / dma200;
+        if (spreadPct < 0.02) {
+            trend = 'Sideways';
+        } else {
+            trend = determineTrend(latestClose, dma50, dma200);
+        }
+    }
 
     const responseData = {
         ticker: nseTicker,
         latestClose,
         currency,
         lastUpdated: new Date().toISOString(),
+        // Display arrays (200 points each, always aligned)
         historicalCloses,
+        historicalDates,
+        dma50Series,
+        dma200Series,
+        // Single values (backward-compat)
         dma50,
         dma200,
         trend,
+        // Metadata
+        totalDays: allCloses.length,
     };
 
     // ── Cache validation guard ─────────────────────────────────────────────────
-    // Do not cache if core fields are missing/invalid or response contains an error.
     const isValidForCache =
         responseData &&
         !responseData.error &&
@@ -101,7 +172,7 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
             ...ctx,
             event: 'SKIP_CACHE_INVALID_DATA',
             ticker: nseTicker,
-            reason: 'latestClose is null/NaN or historicalCloses is empty',
+            reason: 'latestClose null/NaN or historicalCloses empty',
         });
     }
 

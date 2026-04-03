@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import {
     Box,
     Typography,
@@ -10,8 +11,10 @@ import { calcDistance, getInterpretation } from './utils/interpretation';
 import PriceCard from './components/PriceCard';
 import TrendCard from './components/TrendCard';
 import InterpretationCard from './components/InterpretationCard';
-import PriceChartCard from './components/PriceChartCard';
 import AnalysisDefault from './components/AnalysisDefault';
+
+// Step 12: lazy-load the heavy Recharts bundle
+const PriceChartCard = lazy(() => import('./components/PriceChartCard'));
 
 function LoadingSkeleton() {
     return (
@@ -115,10 +118,23 @@ function StockAnalysisPage() {
 
             {/* Main Grid */}
             <Grid container spacing={4}>
-                <PriceChartCard
-                    historicalCloses={data.historicalCloses}
-                    trend={data.trend}
-                />
+                <Suspense fallback={
+                    <Grid item xs={12}>
+                        <Box className="glass-card" sx={{ height: 380 }} />
+                    </Grid>
+                }>
+                    <PriceChartCard
+                        historicalCloses={data.historicalCloses}
+                        historicalDates={data.historicalDates}
+                        dma50Series={data.dma50Series}
+                        dma200Series={data.dma200Series}
+                        trend={data.trend}
+                        ticker={data.ticker}
+                        latestClose={data.latestClose}
+                        dma50={data.dma50}
+                        dma200={data.dma200}
+                    />
+                </Suspense>
                 <PriceCard
                     latestClose={data.latestClose}
                     dma50={data.dma50}
