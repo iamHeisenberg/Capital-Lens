@@ -302,7 +302,8 @@ function PriceChartCard({
     );
 
     const trendColor = TREND_COLORS[trend] || '#5a5a6e';
-    const isPartialData = validPriceCount < periodCfg.points;
+    // Show warning only when we genuinely have fewer days than requested
+    const isPartialData = totalPoints < periodCfg.points;
 
     // ── Render ─────────────────────────────────────────────────────────────────
     return (

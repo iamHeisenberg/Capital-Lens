@@ -111,14 +111,12 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
     const allDma50Series  = computeRollingMA(allCloses, 50);
     const allDma200Series = computeRollingMA(allCloses, 200);
 
-    // ── Slice last 200 for display ─────────────────────────────────────────────
-    const DISPLAY_DAYS = 200;
-    const offset = Math.max(0, allCloses.length - DISPLAY_DAYS);
-
-    const historicalCloses = allCloses.slice(offset);
-    const historicalDates  = allDates.slice(offset);
-    const dma50Series      = allDma50Series.slice(offset);
-    const dma200Series     = allDma200Series.slice(offset);
+    // Return ALL fetched data — the frontend period selector handles slicing.
+    // 1Y shows last 200 pts, 2Y shows all ~400 pts. No backend cap needed.
+    const historicalCloses = allCloses;
+    const historicalDates  = allDates;
+    const dma50Series      = allDma50Series;
+    const dma200Series     = allDma200Series;
 
     // Single values for PriceCard / TrendCard (backward-compat)
     const latestClose = historicalCloses[historicalCloses.length - 1];
