@@ -12,6 +12,7 @@ import PriceCard from './components/PriceCard';
 import TrendCard from './components/TrendCard';
 import InterpretationCard from './components/InterpretationCard';
 import AnalysisDefault from './components/AnalysisDefault';
+import StockViewToggle from '../../components/shared/StockViewToggle';
 
 // Step 12: lazy-load the heavy Recharts bundle
 const PriceChartCard = lazy(() => import('./components/PriceChartCard'));
@@ -111,9 +112,12 @@ function StockAnalysisPage() {
                         {data.ticker}
                     </Typography>
                 </Box>
-                <Typography variant="body2">
-                    Last Updated: {new Date(data.lastUpdated).toLocaleString()}
-                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                    <StockViewToggle ticker={ticker} current="analysis" />
+                    <Typography variant="body2">
+                        Last Updated: {new Date(data.lastUpdated).toLocaleString()}
+                    </Typography>
+                </Box>
             </Box>
 
             {/* Main Grid */}
@@ -151,33 +155,6 @@ function StockAnalysisPage() {
                 <InterpretationCard interpretation={interpretation} />
             </Grid>
 
-            {/* Cross-links */}
-            <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Link to={`/fundamentals/${ticker}`} style={{ textDecoration: 'none' }}>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            color: '#22c55e',
-                            transition: 'opacity 0.2s',
-                            '&:hover': { opacity: 0.7 },
-                        }}
-                    >
-                        View Fundamentals →
-                    </Typography>
-                </Link>
-                <Link to="/methodology" style={{ textDecoration: 'none' }}>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            color: '#06b6d4',
-                            transition: 'opacity 0.2s',
-                            '&:hover': { opacity: 0.7 },
-                        }}
-                    >
-                        View Framework Methodology →
-                    </Typography>
-                </Link>
-            </Box>
         </PageLayout>
     );
 }

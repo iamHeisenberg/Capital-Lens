@@ -9,6 +9,7 @@ import ProfitabilityCard from './components/ProfitabilityCard';
 import EfficiencyCard from './components/EfficiencyCard';
 import BalanceSheetCard from './components/BalanceSheetCard';
 import FundamentalsDefault from './components/FundamentalsDefault';
+import StockViewToggle from '../../components/shared/StockViewToggle';
 
 function LoadingSkeleton() {
     return (
@@ -90,18 +91,11 @@ function FundamentalsPage() {
                         {data.fundamentals?.ticker || ticker}
                     </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                    <StockViewToggle ticker={ticker} current="fundamentals" />
                     <Typography variant="body2">
                         Source: Yahoo Finance (Consolidated)
                     </Typography>
-                    <Link to={`/analysis/${ticker}`} style={{ textDecoration: 'none' }}>
-                        <Typography
-                            variant="caption"
-                            sx={{ color: '#22c55e', '&:hover': { opacity: 0.7 } }}
-                        >
-                            View Analysis →
-                        </Typography>
-                    </Link>
                 </Box>
             </Box>
 

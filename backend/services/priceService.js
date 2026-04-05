@@ -4,6 +4,7 @@ const { calculateDMA } = require('../utils/dmaUtils');
 const { determineTrend } = require('../utils/trendUtils');
 const { getCache, setCache, cacheKeys } = require('./cacheService');
 const logger = require('../utils/logger');
+const { withRetry } = require('../utils/withRetry');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -68,11 +69,14 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
     const startDate = new Date();
     startDate.setFullYear(startDate.getFullYear() - 2); // 2 years
 
-    const result = await yahooFinance.historical(nseTicker, {
-        period1: startDate,
-        period2: endDate,
-        interval: '1d',
-    });
+    const result = await withRetry(
+        () => yahooFinance.historical(nseTicker, {
+            period1: startDate,
+            period2: endDate,
+            interval: '1d',
+        }),
+        { label: nseTicker }
+    );
 
     if (!result || result.length === 0) {
         const error = new Error('No data found for ticker: ' + nseTicker);
@@ -92,7 +96,10 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
     }
 
     // Fetch quote for currency check
-    const quote = await yahooFinance.quote(nseTicker);
+    const quote = await withRetry(
+        () => yahooFinance.quote(nseTicker),
+        { label: nseTicker }
+    );
     const currency = quote?.currency || 'INR';
 
     if (currency !== 'INR') {
