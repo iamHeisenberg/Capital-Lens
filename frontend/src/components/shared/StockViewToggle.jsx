@@ -13,7 +13,7 @@ function StockViewToggle({ ticker, current }) {
     if (!ticker) return null;
 
     const tabs = [
-        { label: 'Analysis',     view: 'analysis',     to: `/analysis/${ticker}` },
+        { label: 'Technicals',   view: 'analysis',     to: `/technicals/${ticker}` },
         { label: 'Fundamentals', view: 'fundamentals', to: `/fundamentals/${ticker}` },
     ];
 

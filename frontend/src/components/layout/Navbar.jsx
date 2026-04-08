@@ -5,7 +5,7 @@ import GlobalSearchBar from '../search/GlobalSearchBar';
 
 const navLinks = [
     { label: 'Home',         path: '/',            exact: true },
-    { label: 'Analysis',     path: '/analysis'                 },
+    { label: 'Technicals',   path: '/technicals'               },
     { label: 'Fundamentals', path: '/fundamentals'             },
     { label: 'Methodology',  path: '/methodology'              },
 ];
@@ -61,7 +61,7 @@ function Navbar() {
             : location.pathname.startsWith(link.path);
 
     const getNavTarget = (link) => {
-        if (currentTicker && (link.path === '/analysis' || link.path === '/fundamentals')) {
+        if (currentTicker && (link.path === '/technicals' || link.path === '/fundamentals')) {
             return `${link.path}/${currentTicker}`;
         }
         return link.path;

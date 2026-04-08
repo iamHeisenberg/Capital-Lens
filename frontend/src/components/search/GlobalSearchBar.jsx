@@ -19,7 +19,7 @@ function GlobalSearchBar() {
         setQuery('');
         // Stay in the user's current section when selecting a new stock
         const isFundamentals = location.pathname.startsWith('/fundamentals');
-        const section = isFundamentals ? 'fundamentals' : 'analysis';
+        const section = isFundamentals ? 'fundamentals' : 'technicals';
         navigate(`/${section}/${option.symbol}`);
     };
 

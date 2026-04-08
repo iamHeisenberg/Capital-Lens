@@ -99,7 +99,7 @@ function StockAnalysisPage() {
             >
                 <Box>
                     <Typography variant="h6" sx={{ mb: 0.5 }}>
-                        CURRENT ANALYSIS
+                        TECHNICALS
                     </Typography>
                     <Typography
                         sx={{

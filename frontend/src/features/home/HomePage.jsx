@@ -4,10 +4,10 @@ import PageLayout from '../../components/layout/PageLayout';
 
 const features = [
     {
-        title: 'Stock Analysis',
+        title: 'Technicals',
         description: 'Real-time DMA-based structural trend analysis for NSE equities. Track 50 & 200-day moving averages with systematic bias interpretation.',
-        path: '/analysis',
-        cta: 'Open Analysis',
+        path: '/technicals',
+        cta: 'Open Technicals',
         accent: '#22c55e',
     },
     {
