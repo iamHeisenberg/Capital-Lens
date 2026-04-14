@@ -21,10 +21,10 @@ const logger = require('./logger');
  *   attempt 4 → 2400ms  (if retries=4)
  */
 async function withRetry(fn, {
-    retries    = 3,
+    retries     = 3,
     baseDelayMs = 600,
-    retryOn    = [429, 503, 504],
-    label      = '',
+    retryOn     = [429, 503, 504],
+    label       = '',
 } = {}) {
     let lastError;
 
@@ -36,13 +36,24 @@ async function withRetry(fn, {
 
             // Extract HTTP status from various error shapes yahoo-finance2 may throw
             const status =
-                err?.response?.status  ||
-                err?.statusCode        ||
-                err?.cause?.status     ||
+                err?.response?.status ||
+                err?.statusCode       ||
+                err?.cause?.status    ||
                 null;
 
-            const isTimeout  = /timeout|ETIMEDOUT|ECONNRESET/i.test(err?.message || '');
-            const isRetryable = retryOn.includes(status) || isTimeout;
+            const msg = err?.message || '';
+
+            const isTimeout = /timeout|ETIMEDOUT|ECONNRESET/i.test(msg);
+
+            // yahoo-finance2 crumb errors embed the HTTP status in the message string:
+            //   "Failed to get crumb, status 429, statusText: Too Many Requests"
+            // They do NOT set err.statusCode, so we must match on message text too.
+            const isCrumb429 = /crumb/i.test(msg) && /429/.test(msg);
+
+            // Also catch any plain "status 429" string in the message
+            const isMsg429 = /status\s*429/i.test(msg);
+
+            const isRetryable = retryOn.includes(status) || isTimeout || isCrumb429 || isMsg429;
 
             if (!isRetryable || attempt === retries) {
                 // Non-retryable error or all attempts exhausted — rethrow
@@ -57,7 +68,7 @@ async function withRetry(fn, {
                 retries,
                 status,
                 delayMs,
-                error:   err?.message,
+                error:   msg,
             });
 
             await new Promise((resolve) => setTimeout(resolve, delayMs));
