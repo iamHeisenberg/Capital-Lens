@@ -1,3 +1,4 @@
+require('dotenv').config(); // MUST be first — loads .env before any other module reads process.env
 const express = require('express');
 const cors = require('cors');
 
