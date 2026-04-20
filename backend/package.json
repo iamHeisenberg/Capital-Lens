@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
+    "seed": "node scripts/seedCache.js",
+    "seed:price": "node scripts/seedCache.js --type price",
+    "seed:fundamentals": "node scripts/seedCache.js --type fundamentals",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,6 +17,7 @@
   "dependencies": {
     "@upstash/redis": "^1.37.0",
     "axios": "^1.13.5",
+    "bottleneck": "^2.19.5",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
