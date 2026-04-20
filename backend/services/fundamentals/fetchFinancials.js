@@ -1,7 +1,6 @@
 'use strict';
 
-const YahooFinance = require('yahoo-finance2').default;
-const yahooFinance = new YahooFinance();
+const yahooFinance = require('../../utils/yahooFinanceClient');
 const { getCache, setCache, cacheKeys } = require('../cacheService');
 const logger = require('../../utils/logger');
 const { withRetry, withTimeout } = require('../../utils/withRetry');
@@ -210,7 +209,7 @@ const fetchFinancials = async (ticker, ctx = {}, forceRefresh = false) => {
 
     if (isValidForCache) {
         // Cache fundamentals data for 24 hours (86400 seconds)
-        await setCache(cacheKey, responseData, 86400, logCtx);
+        await setCache(cacheKey, responseData, 604800, logCtx); // 7-day TTL — fundamentals change quarterly
     } else {
         logger.warn('SKIP_CACHE_INVALID_DATA — fundamentals data failed validation', {
             ...logCtx,

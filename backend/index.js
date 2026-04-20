@@ -58,19 +58,17 @@ app.use('/api', fundamentalsRoutes);
 app.listen(PORT, async () => {
     logger.info('Server started', { endpoint: null, method: null, correlationId: 'startup' }, { port: PORT });
 
-    // Pre-warm Yahoo Finance crumb on startup.
-    // yahoo-finance2 caches the crumb after the first request.
-    // Without this, concurrent cold-start requests all race to fetch the crumb
-    // simultaneously and Yahoo returns 429 for all but one.
-    // A single warm-up call ensures the crumb is ready before any user request arrives.
+    // Pre-warm Yahoo Finance crumb on startup using the SHARED singleton instance.
+    // All services (priceService, fetchFinancials) import the same yahooFinanceClient module.
+    // Warming it here means the crumb is cached before any user request arrives,
+    // preventing concurrent cold-start requests from each racing to fetch the crumb
+    // and getting 429s from Yahoo Finance.
     try {
-        const YahooFinance = require('yahoo-finance2').default;
-        const yf = new YahooFinance();
-        // A minimal quote call triggers getCrumb internally and caches the result
-        await yf.quote('RELIANCE.NS', { fields: ['regularMarketPrice'] });
+        const yahooFinance = require('./utils/yahooFinanceClient');
+        await yahooFinance.quote('RELIANCE.NS', { fields: ['regularMarketPrice'] });
         logger.info('Yahoo Finance crumb pre-warm succeeded', { correlationId: 'startup' });
     } catch (err) {
-        // Non-fatal — just means first real user request will attempt the crumb fetch
+        // Non-fatal — the crumb fetch will be attempted on first real user request
         logger.warn('Yahoo Finance crumb pre-warm failed (non-fatal)', {
             correlationId: 'startup',
             error: err.message,

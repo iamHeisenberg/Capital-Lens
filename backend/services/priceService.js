@@ -1,5 +1,4 @@
-const YahooFinance = require('yahoo-finance2').default;
-const yahooFinance = new YahooFinance();
+const yahooFinance = require('../utils/yahooFinanceClient');
 const { calculateDMA } = require('../utils/dmaUtils');
 const { determineTrend } = require('../utils/trendUtils');
 const { getCache, setCache, cacheKeys } = require('./cacheService');
@@ -177,7 +176,7 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
         responseData.historicalCloses.length > 0;
 
     if (isValidForCache) {
-        await setCache(cacheKey, responseData, 3600, ctx);
+        await setCache(cacheKey, responseData, 14400, ctx); // 4h TTL
     } else {
         logger.warn('SKIP_CACHE_INVALID_DATA — price data failed validation', {
             ...ctx,
