@@ -4,7 +4,7 @@ const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 const { getCache, setCache, cacheKeys } = require('../cacheService');
 const logger = require('../../utils/logger');
-const { withRetry } = require('../../utils/withRetry');
+const { withRetry, withTimeout } = require('../../utils/withRetry');
 
 /**
  * Fetch raw financial data from Yahoo Finance for an NSE ticker.
@@ -63,7 +63,10 @@ const fetchFinancials = async (ticker, ctx = {}, forceRefresh = false) => {
 
     try {
         result = await withRetry(
-            () => yahooFinance.quoteSummary(nseTicker, { modules }),
+            () => withTimeout(
+                () => yahooFinance.quoteSummary(nseTicker, { modules }),
+                20000, nseTicker
+            ),
             { label: nseTicker }
         );
         const latencyMs = Date.now() - t1;
@@ -122,12 +125,15 @@ const fetchFinancials = async (ticker, ctx = {}, forceRefresh = false) => {
         startDate.setFullYear(startDate.getFullYear() - 6);
 
         const tsRaw = await withRetry(
-            () => yahooFinance.fundamentalsTimeSeries(nseTicker, {
-                type: 'annual',
-                module: 'all',
-                period1: startDate,
-                period2: endDate,
-            }, { validateResult: false }),
+            () => withTimeout(
+                () => yahooFinance.fundamentalsTimeSeries(nseTicker, {
+                    type: 'annual',
+                    module: 'all',
+                    period1: startDate,
+                    period2: endDate,
+                }, { validateResult: false }),
+                15000, nseTicker
+            ),
             { label: nseTicker }
         );
 

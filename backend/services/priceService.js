@@ -4,7 +4,7 @@ const { calculateDMA } = require('../utils/dmaUtils');
 const { determineTrend } = require('../utils/trendUtils');
 const { getCache, setCache, cacheKeys } = require('./cacheService');
 const logger = require('../utils/logger');
-const { withRetry } = require('../utils/withRetry');
+const { withRetry, withTimeout } = require('../utils/withRetry');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -70,11 +70,14 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
     startDate.setFullYear(startDate.getFullYear() - 2); // 2 years
 
     const result = await withRetry(
-        () => yahooFinance.historical(nseTicker, {
-            period1: startDate,
-            period2: endDate,
-            interval: '1d',
-        }),
+        () => withTimeout(
+            () => yahooFinance.historical(nseTicker, {
+                period1: startDate,
+                period2: endDate,
+                interval: '1d',
+            }),
+            15000, nseTicker
+        ),
         { label: nseTicker }
     );
 
@@ -97,7 +100,10 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
 
     // Fetch quote for currency check
     const quote = await withRetry(
-        () => yahooFinance.quote(nseTicker),
+        () => withTimeout(
+            () => yahooFinance.quote(nseTicker),
+            10000, nseTicker
+        ),
         { label: nseTicker }
     );
     const currency = quote?.currency || 'INR';
