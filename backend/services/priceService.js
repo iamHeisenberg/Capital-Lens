@@ -4,6 +4,7 @@ const { determineTrend } = require('../utils/trendUtils');
 const { getCache, setCache, cacheKeys } = require('./cacheService');
 const logger = require('../utils/logger');
 const { withRetry, withTimeout } = require('../utils/withRetry');
+const { computeOBV, computeOBVSignal, computeRSI } = require('../utils/indicators');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -124,7 +125,6 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
     const allDma200Series = computeRollingMA(allCloses, 200);
 
     // Return ALL fetched data — the frontend period selector handles slicing.
-    // 1Y shows last 200 pts, 2Y shows all ~400 pts. No backend cap needed.
     const historicalCloses = allCloses;
     const historicalDates  = allDates;
     const dma50Series      = allDma50Series;
@@ -148,20 +148,108 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
         }
     }
 
+    // ── Extract volume data ────────────────────────────────────────────────────
+    // Volume is optional — some NSE stocks may return null volumes from Yahoo.
+    // We gate ALL volume-derived features on hasVolume to avoid misleading output.
+    const allVolumes = validResult.map((d) =>
+        (d.volume != null && isFinite(d.volume) && d.volume > 0) ? d.volume : null
+    );
+    const hasVolume = allVolumes.some((v) => v !== null);
+
+    // ── Compute OBV ───────────────────────────────────────────────────────────
+    let obvSeries    = null;
+    let indicators   = {};
+
+    if (hasVolume) {
+        try {
+            // Treat null volume days as 0 (OBV unchanged that day — standard rule)
+            const volumesForOBV = allVolumes.map((v) => v ?? 0);
+            obvSeries = computeOBV(allCloses, volumesForOBV);
+
+            const { signal: obvSignal, slopeOBV, slopePrice } =
+                computeOBVSignal(obvSeries, allCloses);
+
+            const OBV_SIGNAL_TEXT = {
+                BullishDivergence:  'OBV rising while price flat/falling — institutional accumulation detected.',
+                BearishDivergence:  'OBV falling while price rising — potential distribution; rally may be weak.',
+                Confirmed:          'Volume confirms the current price trend.',
+                Neutral:            'No clear OBV divergence — volume trend is inconclusive.',
+                InsufficientData:   'Not enough data to determine OBV divergence.',
+            };
+
+            indicators.obv = {
+                signal:     obvSignal,
+                text:       OBV_SIGNAL_TEXT[obvSignal] ?? 'Volume trend is inconclusive.',
+                slopeOBV,
+                slopePrice,
+                latestOBV:  obvSeries[obvSeries.length - 1],
+            };
+        } catch (err) {
+            // OBV computation failed — degrade gracefully, don't crash the request
+            logger.error('OBV computation failed', { ticker: nseTicker, error: err.message });
+            obvSeries  = null;
+            indicators = {};
+        }
+    }
+
+    // ── Compute RSI ───────────────────────────────────────────────────────────
+    // RSI only needs closes — always computed regardless of volume availability.
+    let rsiSeries = null;
+    try {
+        rsiSeries = computeRSI(allCloses); // period = 14 (default)
+
+        const latestRSI = rsiSeries[rsiSeries.length - 1]; // null if < 14 bars
+
+        const getRSISignal = (v) => {
+            if (v == null) return 'InsufficientData';
+            if (v < 30)    return 'Oversold';
+            if (v < 40)    return 'WeakMomentum';
+            if (v < 60)    return 'Neutral';
+            if (v < 70)    return 'Strong';
+            return 'Overbought';
+        };
+
+        const RSI_TEXT = {
+            Oversold:         'RSI below 30 — stock is deeply oversold. Strong entry zone if fundamentals are sound.',
+            WeakMomentum:     'RSI 30–40 — momentum is weak. Cautious accumulation possible on strong fundamentals.',
+            Neutral:          'RSI 40–60 — neutral momentum. No clear directional edge.',
+            Strong:           'RSI 60–70 — strong upward momentum. Hold; add on dips.',
+            Overbought:       'RSI above 70 — stock is overbought. Wait for a pullback before entering.',
+            InsufficientData: 'Fewer than 14 trading days of data — RSI cannot be computed yet.',
+        };
+
+        const rsiSignal = getRSISignal(latestRSI);
+        indicators.rsi = {
+            value:  latestRSI != null ? +latestRSI.toFixed(2) : null,
+            signal: rsiSignal,
+            text:   RSI_TEXT[rsiSignal],
+        };
+    } catch (err) {
+        logger.error('RSI computation failed', { ticker: nseTicker, error: err.message });
+        rsiSeries = null;
+        // indicators.rsi stays absent — frontend degrades gracefully
+    }
+
     const responseData = {
         ticker: nseTicker,
         latestClose,
         currency,
         lastUpdated: new Date().toISOString(),
-        // Display arrays (200 points each, always aligned)
+        // Display arrays (always aligned with historicalDates)
         historicalCloses,
         historicalDates,
+        historicalVolumes: hasVolume ? allVolumes : null, // null = no volume data
         dma50Series,
         dma200Series,
+        obvSeries,   // null when hasVolume=false or computation failed
+        rsiSeries,   // null if < 14 bars or computation failed
+        hasVolume,   // explicit flag — frontend gates volume UI on this
         // Single values (backward-compat)
         dma50,
         dma200,
         trend,
+        // Indicators
+        indicators,
         // Metadata
         totalDays: allCloses.length,
     };

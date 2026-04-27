@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Box, Typography, Grid } from '@mui/material';
 import {
-    ComposedChart, Area, Line,
-    XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine,
+    ComposedChart, Area, Line, Bar, BarChart,
+    XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, ReferenceArea,
     ResponsiveContainer,
 } from 'recharts';
 import PeriodSelector, { PERIODS } from './PeriodSelector';
@@ -179,6 +179,7 @@ function ConditionalLegend({ hasDMA50, hasDMA200 }) {
 function PriceChartCard({
     historicalCloses,
     historicalDates,
+    historicalVolumes,
     dma50Series,
     dma200Series,
     trend,
@@ -186,8 +187,12 @@ function PriceChartCard({
     latestClose,
     dma50,
     dma200,
+    hasVolume,
+    rsiSeries,
 }) {
-    const [selectedPeriod, setSelectedPeriod] = useState('1Y');
+    const [selectedPeriod, setSelectedPeriod]   = useState('1Y');
+    const [volumeCollapsed, setVolumeCollapsed] = useState(false);
+    const [rsiCollapsed, setRsiCollapsed]       = useState(true); // collapsed by default
 
     // Reset period when ticker changes
     useEffect(() => { setSelectedPeriod('1Y'); }, [ticker]);
@@ -230,28 +235,88 @@ function PriceChartCard({
     const validPriceCount = useMemo(() => allPrices.filter(Boolean).length, [allPrices]);
     if (!totalPoints || !validPriceCount) return <EmptyState />;
 
-    // ── STEP 2: Slice using ORIGINAL array length (not filtered count) ─────────
-    // Critical: offset must be based on totalPoints so DMA slice stays aligned.
+    // ── Slice: period selector drives both price AND volume charts ────────────
     const periodCfg  = PERIODS.find((p) => p.label === selectedPeriod) ?? PERIODS[PERIODS.length - 1];
     const displayCount = Math.min(periodCfg.points, totalPoints);
     const offset       = totalPoints - displayCount;
 
-    const slicedPrices = allPrices.slice(offset);
-    const slicedDates  = allDates.slice(offset);
-    const slicedDma50  = allDma50.slice(offset);
-    const slicedDma200 = allDma200.slice(offset);
+    const slicedPrices  = allPrices.slice(offset);
+    const slicedDates   = allDates.slice(offset);
+    const slicedDma50   = allDma50.slice(offset);
+    const slicedDma200  = allDma200.slice(offset);
 
-    // ── STEP 4: DMA visibility — check for at least one non-null value ─────────
+    // ── Volume slicing ─────────────────────────────────────────────────────────
+    const allVolumes = useMemo(() =>
+        hasVolume && Array.isArray(historicalVolumes)
+            ? historicalVolumes.map((v) =>
+                (v != null && isFinite(v) && v > 0) ? v : null
+            )
+            : [],
+    [hasVolume, historicalVolumes]);
+
+    const slicedVolumes = allVolumes.length ? allVolumes.slice(offset) : [];
+
+    // ── DMA visibility ─────────────────────────────────────────────────────────
     const hasDMA50  = slicedDma50.some((v)  => v !== null);
     const hasDMA200 = slicedDma200.some((v) => v !== null);
 
-    // ── Chart data (memoized, indices preserved) ───────────────────────────────
+    // ── Chart data ─────────────────────────────────────────────────────────────
     const chartData = useMemo(() => slicedPrices.map((price, i) => ({
         index: i,
-        price:  price         != null ? +price.toFixed(2)         : null,
+        price:  price            != null ? +price.toFixed(2)            : null,
         dma50:  slicedDma50[i]  != null ? +slicedDma50[i].toFixed(2)  : null,
         dma200: slicedDma200[i] != null ? +slicedDma200[i].toFixed(2) : null,
     })), [slicedPrices, slicedDma50, slicedDma200]);
+
+    // ── Volume chart data ──────────────────────────────────────────────────────
+    // Bar color: green on up-day, red on down-day, gray when no comparison
+    const volumeChartData = useMemo(() => {
+        if (!slicedVolumes.length) return [];
+        return slicedVolumes.map((vol, i) => {
+            const curr = slicedPrices[i];
+            const prev = i > 0 ? slicedPrices[i - 1] : null;
+            let direction = 'neutral';
+            if (curr != null && prev != null) {
+                if (curr > prev) direction = 'up';
+                else if (curr < prev) direction = 'down';
+            }
+            return { index: i, volume: vol, direction };
+        });
+    }, [slicedVolumes, slicedPrices]);
+
+    // Average volume reference line
+    const avgVolume = useMemo(() => {
+        const valid = slicedVolumes.filter((v) => v != null && isFinite(v));
+        return valid.length ? valid.reduce((s, v) => s + v, 0) / valid.length : null;
+    }, [slicedVolumes]);
+
+    // Volume Y-axis formatter
+    const formatVolume = (v) => {
+        if (!v && v !== 0) return '';
+        if (v >= 1e9) return `${(v / 1e9).toFixed(1)}B`;
+        if (v >= 1e6) return `${(v / 1e6).toFixed(1)}M`;
+        if (v >= 1e3) return `${(v / 1e3).toFixed(0)}K`;
+        return v;
+    };
+
+    const showVolumePanel = hasVolume && volumeChartData.length > 0;
+
+    // ── RSI slicing ───────────────────────────────────────────────────────────
+    // Slice identically to price so x-axis stays aligned
+    const allRSI = useMemo(() =>
+        Array.isArray(rsiSeries)
+            ? rsiSeries.map((v) => (v != null && isFinite(v) ? +v.toFixed(2) : null))
+            : [],
+    [rsiSeries]);
+
+    const slicedRSI = allRSI.length ? allRSI.slice(offset) : [];
+
+    const rsiChartData = useMemo(() =>
+        slicedRSI.map((rsi, i) => ({ index: i, rsi })),
+    [slicedRSI]);
+
+    const hasRSI = slicedRSI.some((v) => v !== null);
+    const showRSIPanel = hasRSI && rsiChartData.length > 0;
 
     // ── Y-axis domain (include DMA lines in range) ─────────────────────────────
     const allSeriesValues = [
@@ -426,6 +491,176 @@ function PriceChartCard({
                 <Typography variant="caption" sx={{ display: 'block', mt: 2, color: '#5a5a6e' }}>
                     {displayCount} trading days shown · {totalPoints} days of history · DMAs computed on full 2-year dataset · Source: Yahoo Finance
                 </Typography>
+
+                {/* ── Volume Panel ──────────────────────────────────────────── */}
+                {showVolumePanel && (
+                    <Box sx={{ mt: 3 }}>
+                        {/* Volume panel header with collapse toggle */}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                mb: volumeCollapsed ? 0 : 1.5,
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                            }}
+                            onClick={() => setVolumeCollapsed((c) => !c)}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography
+                                    sx={{
+                                        fontSize: '0.65rem',
+                                        fontWeight: 600,
+                                        color: '#3a3a4e',
+                                        letterSpacing: '0.12em',
+                                        textTransform: 'uppercase',
+                                    }}
+                                >
+                                    VOLUME
+                                </Typography>
+                                {avgVolume != null && (
+                                    <Typography sx={{ fontSize: '0.65rem', color: '#5a5a6e' }}>
+                                        · avg {formatVolume(avgVolume)}/day
+                                    </Typography>
+                                )}
+                            </Box>
+                            <Typography sx={{ fontSize: '0.65rem', color: '#5a5a6e' }}>
+                                {volumeCollapsed ? '▶ Show' : '▼ Hide'}
+                            </Typography>
+                        </Box>
+
+                        {!volumeCollapsed && (
+                            <ResponsiveContainer width="100%" height={80}>
+                                <BarChart
+                                    data={volumeChartData}
+                                    margin={{ top: 0, right: 12, left: 0, bottom: 0 }}
+                                    barCategoryGap="10%"
+                                >
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="rgba(255,255,255,0.03)"
+                                        vertical={false}
+                                    />
+                                    <XAxis dataKey="index" hide />
+                                    <YAxis
+                                        tickFormatter={formatVolume}
+                                        tick={{ fill: '#5a5a6e', fontSize: 9 }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        width={38}
+                                        tickCount={3}
+                                    />
+                                    <Tooltip
+                                        cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                                        content={({ active, payload }) => {
+                                            if (!active || !payload?.length) return null;
+                                            const d = payload[0]?.payload;
+                                            const dateStr = slicedDates?.[d?.index];
+                                            const formatted = dateStr
+                                                ? new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+                                                : null;
+                                            return (
+                                                <Box sx={{ background: 'rgba(10,10,18,0.96)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', p: '6px 10px' }}>
+                                                    {formatted && <Typography sx={{ fontSize: '0.65rem', color: '#5a5a6e', mb: 0.25 }}>{formatted}</Typography>}
+                                                    <Typography sx={{ fontSize: '0.72rem', color: '#e8e8ed' }}>
+                                                        {formatVolume(d?.volume ?? 0)} shares
+                                                    </Typography>
+                                                </Box>
+                                            );
+                                        }}
+                                    />
+                                    {avgVolume != null && (
+                                        <ReferenceLine
+                                            y={avgVolume}
+                                            stroke="rgba(245,158,11,0.4)"
+                                            strokeDasharray="4 3"
+                                            label={{ value: 'avg', position: 'insideTopRight', fill: '#5a5a6e', fontSize: 8 }}
+                                        />
+                                    )}
+                                    {/* Render two Bar series: up-days and down-days */}
+                                    <Bar
+                                        dataKey="volume"
+                                        radius={[1, 1, 0, 0]}
+                                        maxBarSize={8}
+                                        fill="#22c55e"
+                                        // Override fill per bar based on direction
+                                        // Recharts doesn't support per-bar fill on a single Bar without a Cell trick
+                                        // We use a custom shape instead:
+                                        shape={(props) => {
+                                            const { x, y, width, height, payload } = props;
+                                            const color =
+                                                payload.direction === 'up'   ? '#22c55e' :
+                                                payload.direction === 'down' ? '#ef4444' :
+                                                                               '#5a5a6e';
+                                            return (
+                                                <rect
+                                                    x={x}
+                                                    y={y}
+                                                    width={Math.max(width, 1)}
+                                                    height={Math.max(height, 1)}
+                                                    fill={color}
+                                                    opacity={0.7}
+                                                    rx={1}
+                                                />
+                                            );
+                                        }}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </Box>
+                )}
+                {/* ── RSI Panel ────────────────────────────────────────────────── */}
+                {showRSIPanel && (
+                    <Box sx={{ mt: 3 }}>
+                        <Box
+                            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: rsiCollapsed ? 0 : 1.5, cursor: 'pointer', userSelect: 'none' }}
+                            onClick={() => setRsiCollapsed((c) => !c)}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: '#3a3a4e', letterSpacing: '0.12em', textTransform: 'uppercase' }}>RSI (14)</Typography>
+                                <Typography sx={{ fontSize: '0.62rem', color: '#22c55e' }}>30 oversold</Typography>
+                                <Typography sx={{ fontSize: '0.62rem', color: '#5a5a6e' }}>·</Typography>
+                                <Typography sx={{ fontSize: '0.62rem', color: '#ef4444' }}>70 overbought</Typography>
+                            </Box>
+                            <Typography sx={{ fontSize: '0.65rem', color: '#5a5a6e' }}>{rsiCollapsed ? '▶ Show' : '▼ Hide'}</Typography>
+                        </Box>
+                        {!rsiCollapsed && (
+                            <ResponsiveContainer width="100%" height={110}>
+                                <ComposedChart data={rsiChartData} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
+                                    <ReferenceArea y1={0}  y2={30}  fill="rgba(34,197,94,0.06)"  fillOpacity={1} />
+                                    <ReferenceArea y1={30} y2={70}  fill="rgba(255,255,255,0.01)" fillOpacity={1} />
+                                    <ReferenceArea y1={70} y2={100} fill="rgba(239,68,68,0.06)"  fillOpacity={1} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                                    <XAxis dataKey="index" hide />
+                                    <YAxis domain={[0, 100]} ticks={[0, 30, 50, 70, 100]} tick={{ fill: '#5a5a6e', fontSize: 9 }} axisLine={false} tickLine={false} width={28} />
+                                    <Tooltip
+                                        cursor={{ stroke: 'rgba(255,255,255,0.06)' }}
+                                        content={({ active, payload }) => {
+                                            if (!active || !payload?.length) return null;
+                                            const d = payload[0]?.payload;
+                                            const dateStr = slicedDates?.[d?.index];
+                                            const formatted = dateStr ? new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : null;
+                                            const rsiVal = d?.rsi;
+                                            const rsiColor = rsiVal == null ? '#5a5a6e' : rsiVal < 30 ? '#22c55e' : rsiVal < 60 ? '#f59e0b' : rsiVal < 70 ? '#f97316' : '#ef4444';
+                                            return (
+                                                <Box sx={{ background: 'rgba(10,10,18,0.96)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', p: '6px 10px' }}>
+                                                    {formatted && <Typography sx={{ fontSize: '0.65rem', color: '#5a5a6e', mb: 0.25 }}>{formatted}</Typography>}
+                                                    <Typography sx={{ fontSize: '0.72rem', color: rsiColor, fontFamily: 'monospace' }}>RSI {rsiVal?.toFixed(1) ?? '—'}</Typography>
+                                                </Box>
+                                            );
+                                        }}
+                                    />
+                                    <ReferenceLine y={70} stroke="rgba(239,68,68,0.4)"    strokeDasharray="4 3" />
+                                    <ReferenceLine y={30} stroke="rgba(34,197,94,0.4)"    strokeDasharray="4 3" />
+                                    <ReferenceLine y={50} stroke="rgba(255,255,255,0.06)" strokeDasharray="3 6" />
+                                    <Line type="monotone" dataKey="rsi" stroke="#a78bfa" strokeWidth={1.5} dot={false} connectNulls={false} activeDot={{ r: 3, fill: '#a78bfa', strokeWidth: 0 }} />
+                                </ComposedChart>
+                            </ResponsiveContainer>
+                        )}
+                    </Box>
+                )}
             </Box>
         </Grid>
     );

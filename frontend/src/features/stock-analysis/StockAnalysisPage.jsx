@@ -12,6 +12,8 @@ import PriceCard from './components/PriceCard';
 import TrendCard from './components/TrendCard';
 import InterpretationCard from './components/InterpretationCard';
 import AnalysisDefault from './components/AnalysisDefault';
+import OBVCard from './components/OBVCard';
+import RSICard from './components/RSICard';
 import StockViewToggle from '../../components/shared/StockViewToggle';
 
 // Step 12: lazy-load the heavy Recharts bundle
@@ -130,6 +132,7 @@ function StockAnalysisPage() {
                     <PriceChartCard
                         historicalCloses={data.historicalCloses}
                         historicalDates={data.historicalDates}
+                        historicalVolumes={data.historicalVolumes}
                         dma50Series={data.dma50Series}
                         dma200Series={data.dma200Series}
                         trend={data.trend}
@@ -137,6 +140,8 @@ function StockAnalysisPage() {
                         latestClose={data.latestClose}
                         dma50={data.dma50}
                         dma200={data.dma200}
+                        hasVolume={data.hasVolume}
+                        rsiSeries={data.rsiSeries}
                     />
                 </Suspense>
                 <PriceCard
@@ -153,6 +158,13 @@ function StockAnalysisPage() {
                     dma50Above200={dma50Above200}
                 />
                 <InterpretationCard interpretation={interpretation} />
+                {/* OBV card — self-hides when hasVolume=false or data unavailable */}
+                <OBVCard
+                    obv={data.indicators?.obv}
+                    hasVolume={data.hasVolume}
+                />
+                {/* RSI card — self-hides when indicators.rsi is absent */}
+                <RSICard rsi={data.indicators?.rsi} />
             </Grid>
 
         </PageLayout>
