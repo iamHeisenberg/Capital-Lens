@@ -3,28 +3,28 @@
     "symbol": "^NSEI",
     "name": "Nifty 50",
     "group": "benchmark",
-    "shortName": "N50",
+    "shortName": "NIFTY 50",
     "hasVolume": true
   },
   {
     "symbol": "^CNX100",
     "name": "Nifty 100",
     "group": "benchmark",
-    "shortName": "N100",
+    "shortName": "NIFTY 100",
     "hasVolume": true
   },
   {
     "symbol": "^CNX200",
     "name": "Nifty 200",
     "group": "benchmark",
-    "shortName": "N200",
+    "shortName": "NIFTY 200",
     "hasVolume": true
   },
   {
     "symbol": "NIFTYMIDCAP150.NS",
     "name": "Nifty Midcap 150",
     "group": "benchmark",
-    "shortName": "MID150",
+    "shortName": "MIDCAP 150",
     "hasVolume": false
   },
   {
