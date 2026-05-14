@@ -201,8 +201,34 @@ function wilderRSI(avgGain, avgLoss) {
     return 100 - (100 / (1 + avgGain / avgLoss));
 }
 
+// ── Rolling Moving Average ─────────────────────────────────────────────────────
+
+/**
+ * O(N) sliding-window rolling average.
+ *
+ * @param {number[]} prices  Array of close prices (no nulls expected).
+ * @param {number}   period  Window length (e.g. 50 or 200).
+ * @returns {(number|null)[]}  Same length as prices.
+ *                             Indices 0 … period-2 are null (insufficient history).
+ *                             Index period-1 onwards holds the moving average.
+ *
+ * Used by: priceService.js (DMA50/200 for stocks)
+ *          sectorService.js (DMA50/200 for sector/index charts)
+ */
+function computeRollingMA(prices, period) {
+    const result = new Array(prices.length).fill(null);
+    let sum = 0;
+    for (let i = 0; i < prices.length; i++) {
+        sum += prices[i];
+        if (i >= period) sum -= prices[i - period];
+        if (i >= period - 1) result[i] = sum / period;
+    }
+    return result;
+}
+
 module.exports = {
     computeOBV,
     computeOBVSignal,
     computeRSI,
+    computeRollingMA,
 };

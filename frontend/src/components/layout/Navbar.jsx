@@ -5,6 +5,7 @@ import GlobalSearchBar from '../search/GlobalSearchBar';
 
 const navLinks = [
     { label: 'Home',         path: '/',            exact: true },
+    { label: 'Markets',      path: '/markets'                  },
     { label: 'Technicals',   path: '/technicals'               },
     { label: 'Fundamentals', path: '/fundamentals'             },
     { label: 'Methodology',  path: '/methodology'              },

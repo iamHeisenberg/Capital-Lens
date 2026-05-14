@@ -4,24 +4,7 @@ const { determineTrend } = require('../utils/trendUtils');
 const { getCache, setCache, cacheKeys } = require('./cacheService');
 const logger = require('../utils/logger');
 const { withRetry, withTimeout } = require('../utils/withRetry');
-const { computeOBV, computeOBVSignal, computeRSI } = require('../utils/indicators');
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/**
- * O(N) sliding-window rolling average.
- * Returns null for i < period-1 (insufficient history).
- */
-function computeRollingMA(prices, period) {
-    const result = new Array(prices.length).fill(null);
-    let sum = 0;
-    for (let i = 0; i < prices.length; i++) {
-        sum += prices[i];
-        if (i >= period) sum -= prices[i - period];
-        if (i >= period - 1) result[i] = sum / period;
-    }
-    return result;
-}
+const { computeOBV, computeOBVSignal, computeRSI, computeRollingMA } = require('../utils/indicators');
 
 // ── Service ───────────────────────────────────────────────────────────────────
 
@@ -29,10 +12,10 @@ function computeRollingMA(prices, period) {
  * Fetches stock data for a given NSE ticker.
  *
  * Strategy:
- *   1. Fetch ~400 trading days (~2 years) of history
+ *   1. Fetch ~630 trading days (~2.5 years) of history
  *   2. Compute rolling DMA50 + DMA200 on the FULL dataset
  *   3. Return last 200 data points for display,
- *      but DMA lines are accurate because they were computed on 2 years
+ *      but DMA lines are accurate because they were computed on 2.5 years
  *
  * Response:
  *   historicalCloses  — last 200 close prices      (backward-compat)
@@ -64,10 +47,10 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
         });
     }
 
-    // ── Fetch 2 years of history (~400 trading days) ───────────────────────────
-    const endDate = new Date();
+    // ── Fetch 2.5 years of history (~630 trading days) ──────────────────────────
+    const endDate   = new Date();
     const startDate = new Date();
-    startDate.setFullYear(startDate.getFullYear() - 2); // 2 years
+    startDate.setMonth(startDate.getMonth() - 30); // 2.5 years (JS handles month wrap correctly)
 
     const result = await withRetry(
         () => withTimeout(

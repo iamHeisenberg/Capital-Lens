@@ -82,8 +82,11 @@ const clearCache = async (key, ctx = {}) => {
  * Bump CACHE_VERSION in config/cacheConfig.js to invalidate all cached data.
  */
 const cacheKeys = {
-    price: (ticker) => `${CACHE_VERSION}:price:${ticker.toUpperCase()}`,
+    price:        (ticker) => `${CACHE_VERSION}:price:${ticker.toUpperCase()}`,
     fundamentals: (ticker) => `${CACHE_VERSION}:fundamentals:${ticker.toUpperCase()}`,
+    // Sector indices use a version-free namespace — they are additive and should
+    // not be invalidated when the stock CACHE_VERSION is bumped.
+    sector:       (symbol) => `sector:${symbol.toUpperCase()}`,
 };
 
 module.exports = { getCache, setCache, clearCache, cacheKeys };

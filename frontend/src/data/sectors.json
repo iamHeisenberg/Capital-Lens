@@ -1,0 +1,107 @@
+[
+  {
+    "symbol": "^NSEI",
+    "name": "Nifty 50",
+    "group": "benchmark",
+    "shortName": "N50",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNX100",
+    "name": "Nifty 100",
+    "group": "benchmark",
+    "shortName": "N100",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNX200",
+    "name": "Nifty 200",
+    "group": "benchmark",
+    "shortName": "N200",
+    "hasVolume": true
+  },
+  {
+    "symbol": "NIFTYMIDCAP150.NS",
+    "name": "Nifty Midcap 150",
+    "group": "benchmark",
+    "shortName": "MID150",
+    "hasVolume": false
+  },
+  {
+    "symbol": "^NSEBANK",
+    "name": "Nifty Bank",
+    "group": "sector",
+    "shortName": "Bank",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXIT",
+    "name": "Nifty IT",
+    "group": "sector",
+    "shortName": "IT",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXFMCG",
+    "name": "Nifty FMCG",
+    "group": "sector",
+    "shortName": "FMCG",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXAUTO",
+    "name": "Nifty Auto",
+    "group": "sector",
+    "shortName": "Auto",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXPHARMA",
+    "name": "Nifty Pharma",
+    "group": "sector",
+    "shortName": "Pharma",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXMETAL",
+    "name": "Nifty Metal",
+    "group": "sector",
+    "shortName": "Metal",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXENERGY",
+    "name": "Nifty Energy",
+    "group": "sector",
+    "shortName": "Energy",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXREALTY",
+    "name": "Nifty Realty",
+    "group": "sector",
+    "shortName": "Realty",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXINFRA",
+    "name": "Nifty Infra",
+    "group": "sector",
+    "shortName": "Infra",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXPSUBANK",
+    "name": "Nifty PSU Bank",
+    "group": "sector",
+    "shortName": "PSU Bank",
+    "hasVolume": true
+  },
+  {
+    "symbol": "^CNXMEDIA",
+    "name": "Nifty Media",
+    "group": "sector",
+    "shortName": "Media",
+    "hasVolume": false
+  }
+]

@@ -27,9 +27,10 @@ const correlationMiddleware = require('./middleware/correlationMiddleware');
 const requestLogger = require('./middleware/requestLogger');
 const logger = require('./utils/logger');
 
-const priceRoutes = require('./routes/priceRoutes');
+const priceRoutes        = require('./routes/priceRoutes');
 const testFundamentalsRoutes = require('./routes/testFundamentalsRoutes');
 const fundamentalsRoutes = require('./routes/fundamentalsRoutes');
+const marketsRoutes      = require('./routes/marketsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -53,6 +54,7 @@ app.get('/api/test', (req, res) => {
 app.use('/api', priceRoutes);
 app.use('/api', testFundamentalsRoutes);
 app.use('/api', fundamentalsRoutes);
+app.use('/api', marketsRoutes);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, async () => {

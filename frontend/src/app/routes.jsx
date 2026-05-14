@@ -3,6 +3,7 @@ import StockAnalysisPage from '../features/stock-analysis/StockAnalysisPage';
 import MethodologyPage from '../features/methodology/MethodologyPage';
 import HomePage from '../features/home/HomePage';
 import FundamentalsPage from '../features/fundamentals/FundamentalsPage';
+import MarketsPage from '../features/markets/MarketsPage';
 
 /**
  * Redirects /analysis/:ticker → /technicals/:ticker.
@@ -15,6 +16,9 @@ function RedirectAnalysis() {
 
 const routes = [
     { path: '/', element: <HomePage /> },
+
+    // Markets — sector & index performance dashboard
+    { path: '/markets', element: <MarketsPage /> },
 
     // Technicals — canonical routes
     { path: '/technicals',         element: <StockAnalysisPage /> },
