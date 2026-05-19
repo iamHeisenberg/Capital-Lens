@@ -26,6 +26,7 @@ const express = require('express');
 const router  = express.Router();
 const logger  = require('../utils/logger');
 const { getSectorData, toSummary } = require('../services/sectorService');
+const { getStockData }             = require('../services/priceService');
 const { getCache, cacheKeys }      = require('../services/cacheService');
 
 // ── Sector catalog (allowlist + metadata source) ───────────────────────────────
@@ -157,9 +158,9 @@ router.get('/markets/:symbol', async (req, res) => {
  * Strategy:
  *   1. Validate symbol is a known sector (not benchmark)
  *   2. Look up constituent list from sectorConstituents.json
- *   3. Parallel-read all stock price caches (Promise.allSettled — partial OK)
+ *   3. Parallel getStockData() for each constituent (cache-hit → instant, miss → YF fetch + cache)
  *   4. Compute 1M/3M/6M/1Y/2Y returns from historicalCloses server-side
- *   5. Return sorted by 1Y return desc (frontend re-sorts by selectedPeriod)
+ *   5. Return structured response (frontend re-sorts by selectedPeriod)
  */
 router.get('/markets/:symbol/stocks', async (req, res) => {
     const rawSymbol   = req.params.symbol;
@@ -215,17 +216,19 @@ router.get('/markets/:symbol/stocks', async (req, res) => {
 
     const stockResults = await Promise.allSettled(
         constituents.map(async (entry) => {
-            const ticker   = entry.symbol.toUpperCase().endsWith('.NS')
+            const ticker = entry.symbol.toUpperCase().endsWith('.NS')
                 ? entry.symbol
                 : entry.symbol + '.NS';
-            const cacheKey = cacheKeys.price(ticker);
-            const cached   = await getCache(cacheKey, ctx);
 
-            if (!cached || !Array.isArray(cached.historicalCloses)) {
+            // Use getStockData (cache-or-fetch) so this works even when stocks
+            // haven't been individually seeded — Render caches on first hit.
+            const stockData = await getStockData(ticker, { ctx });
+
+            if (!stockData || !Array.isArray(stockData.historicalCloses)) {
                 return { symbol: entry.symbol, name: entry.name, available: false, latestClose: null, returns: null };
             }
 
-            const closes  = cached.historicalCloses;
+            const closes  = stockData.historicalCloses;
             const returns = {};
             for (const [key, days] of Object.entries(PERIOD_DAYS)) {
                 returns[key] = computeReturn(closes, days);
