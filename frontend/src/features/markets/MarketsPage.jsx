@@ -5,7 +5,7 @@ import useMarkets from './hooks/useMarkets';
 import useMarketDetail from './hooks/useMarketDetail';
 import SectorHeatmap from './components/SectorHeatmap';
 import SectorTable from './components/SectorTable';
-import SectorChartPanel from './components/SectorChartPanel';
+import SectorDetailPanel from './components/SectorDetailPanel';
 
 // ── Period selector ────────────────────────────────────────────────────────────
 
@@ -99,9 +99,13 @@ export default function MarketsPage() {
     const { data: detailData, loading: detailLoading, error: detailError } =
         useMarketDetail(selectedSymbol);
 
+    // Derive selected sector's metadata (for group check in SectorDetailPanel)
+    const selectedMeta = [...(benchmarks ?? []), ...(sectors ?? [])]
+        .find((s) => s.symbol === selectedSymbol) ?? null;
+
     const handleSelect = (symbol) => {
         setSelectedSymbol(symbol);
-        // Scroll chart into view after a brief render delay
+        // Scroll panel into view after a brief render delay
         if (symbol) {
             setTimeout(() => {
                 document.getElementById('markets-chart-panel')?.scrollIntoView({
@@ -224,13 +228,14 @@ export default function MarketsPage() {
                     />
                 </Box>
 
-                {/* ── Inline chart panel ── */}
+                {/* ── Inline detail panel (stocks + chart tabs) ── */}
                 <Box id="markets-chart-panel">
-                    <SectorChartPanel
-                        symbol={selectedSymbol}
-                        data={detailData}
-                        loading={detailLoading}
-                        error={detailError}
+                    <SectorDetailPanel
+                        sectorSummary={selectedMeta}
+                        detailData={detailData}
+                        detailLoading={detailLoading}
+                        detailError={detailError}
+                        selectedPeriod={selectedPeriod}
                         onClose={() => setSelectedSymbol(null)}
                     />
                 </Box>
