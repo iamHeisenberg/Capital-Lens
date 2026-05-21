@@ -1,62 +1,58 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 /**
- * Fetches constituent stock returns for a single sector index.
- * GET /api/markets/:symbol/stocks
+ * Fetches constituent stock data for a single sector index symbol.
  *
- * - Returns null data (not loading) when symbol is null or group is 'benchmark'
- * - Resets and re-fetches whenever symbol changes
- *
- * @param {string|null} symbol   Sector symbol e.g. '^CNXIT'
- * @param {string|null} group    'sector' | 'benchmark' — skips fetch for benchmarks
- * @returns {{ stocks, sectorReturns, totalStocks, availableStocks, loading, error }}
+ * @param {string|null} symbol  Yahoo Finance sector symbol, e.g. '^CNXIT'.
+ *                              Pass null / undefined to skip fetching.
+ * @param {boolean} isBenchmark If true, skip the fetch entirely (benchmarks have
+ *                              no constituent mapping).
  */
-export default function useSectorStocks(symbol, group) {
-    const [stocks,          setStocks]          = useState([]);
-    const [sectorReturns,   setSectorReturns]   = useState(null);
-    const [totalStocks,     setTotalStocks]     = useState(0);
-    const [availableStocks, setAvailableStocks] = useState(0);
-    const [loading,         setLoading]         = useState(false);
-    const [error,           setError]           = useState(null);
+export function useSectorStocks(symbol, isBenchmark = false) {
+    const [data,    setData]    = useState(null);   // { sectorReturns, stocks, ... }
+    const [loading, setLoading] = useState(false);
+    const [error,   setError]   = useState(null);
+
+    // Track the last requested symbol so stale responses are ignored
+    const latestSymbol = useRef(null);
 
     useEffect(() => {
-        // Nothing selected, or it's a benchmark — no stocks tab
-        if (!symbol || group === 'benchmark') {
-            setStocks([]);
-            setSectorReturns(null);
-            setTotalStocks(0);
-            setAvailableStocks(0);
+        // Reset on every symbol change
+        setData(null);
+        setError(null);
+
+        if (!symbol || isBenchmark) {
             setLoading(false);
-            setError(null);
             return;
         }
 
+        latestSymbol.current = symbol;
         setLoading(true);
-        setError(null);
-        setStocks([]);
 
-        const url = `${API_BASE}/api/markets/${encodeURIComponent(symbol)}/stocks`;
+        const encoded = encodeURIComponent(symbol);
 
-        fetch(url)
-            .then(async (res) => {
-                const data = await res.json();
-                if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
-                return data;
+        fetch(`${BASE}/api/markets/${encoded}/stocks`)
+            .then((res) => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
             })
-            .then((data) => {
-                setStocks(data.stocks ?? []);
-                setSectorReturns(data.sectorReturns ?? null);
-                setTotalStocks(data.totalStocks ?? 0);
-                setAvailableStocks(data.availableStocks ?? 0);
-                setLoading(false);
+            .then((json) => {
+                // Discard if a newer request has already been dispatched
+                if (latestSymbol.current !== symbol) return;
+                setData(json);
+                setError(null);
             })
             .catch((err) => {
-                setError(err.message);
-                setLoading(false);
+                if (latestSymbol.current !== symbol) return;
+                console.error(`useSectorStocks: fetch failed for ${symbol}`, err);
+                setError(err.message || 'Failed to load stock data');
+            })
+            .finally(() => {
+                if (latestSymbol.current === symbol) setLoading(false);
             });
-    }, [symbol, group]);
+    }, [symbol, isBenchmark]);
 
-    return { stocks, sectorReturns, totalStocks, availableStocks, loading, error };
+    return { data, loading, error };
 }

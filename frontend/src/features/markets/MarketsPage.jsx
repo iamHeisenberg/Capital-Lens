@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Box, Container, Typography } from '@mui/material';
 import PageLayout from '../../components/layout/PageLayout';
@@ -28,20 +29,20 @@ function PeriodSelector({ value, onChange }) {
                         component="button"
                         onClick={() => onChange(key)}
                         sx={{
-                            px:           1.75,
-                            py:           0.6,
+                            px: 1.75,
+                            py: 0.6,
                             borderRadius: '6px',
-                            border:       `1px solid ${active ? 'rgba(6,182,212,0.5)' : 'rgba(255,255,255,0.08)'}`,
-                            background:   active ? 'rgba(6,182,212,0.12)' : 'transparent',
-                            color:        active ? '#06b6d4' : '#8a8a9a',
-                            fontSize:     '0.72rem',
-                            fontWeight:   active ? 600 : 400,
-                            cursor:       'pointer',
-                            transition:   'all 0.15s ease',
-                            fontFamily:   'inherit',
+                            border: `1px solid ${active ? 'rgba(6,182,212,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                            background: active ? 'rgba(6,182,212,0.12)' : 'transparent',
+                            color: active ? '#06b6d4' : '#8a8a9a',
+                            fontSize: '0.72rem',
+                            fontWeight: active ? 600 : 400,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            fontFamily: 'inherit',
                             '&:hover': {
-                                background:  active ? 'rgba(6,182,212,0.18)' : 'rgba(255,255,255,0.05)',
-                                color:       active ? '#06b6d4' : '#c8c8d0',
+                                background: active ? 'rgba(6,182,212,0.18)' : 'rgba(255,255,255,0.05)',
+                                color: active ? '#06b6d4' : '#c8c8d0',
                                 borderColor: active ? 'rgba(6,182,212,0.7)' : 'rgba(255,255,255,0.14)',
                             },
                         }}
@@ -65,20 +66,20 @@ function LoadingSkeleton() {
                 <Box className="skeleton-pulse" sx={{ height: 18, width: '50%', mb: 4 }} />
                 {/* Period selector */}
                 <Box sx={{ display: 'flex', gap: 1, mb: 4 }}>
-                    {[1,2,3,4,5].map((i) => (
+                    {[1, 2, 3, 4, 5].map((i) => (
                         <Box key={i} className="skeleton-pulse" sx={{ height: 32, width: 48, borderRadius: '6px' }} />
                     ))}
                 </Box>
                 {/* Heatmap */}
                 <Box className="skeleton-pulse" sx={{ height: 16, width: 100, mb: 1.5 }} />
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, mb: 3 }}>
-                    {[1,2,3,4].map((i) => (
+                    {[1, 2, 3, 4].map((i) => (
                         <Box key={i} className="skeleton-pulse" sx={{ height: 82, borderRadius: '10px' }} />
                     ))}
                 </Box>
                 <Box className="skeleton-pulse" sx={{ height: 16, width: 80, mb: 1.5 }} />
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1, mb: 5 }}>
-                    {[1,2,3,4,5,6,7,8,9,10,11].map((i) => (
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
                         <Box key={i} className="skeleton-pulse" sx={{ height: 82, borderRadius: '10px' }} />
                     ))}
                 </Box>
@@ -99,13 +100,14 @@ export default function MarketsPage() {
     const { data: detailData, loading: detailLoading, error: detailError } =
         useMarketDetail(selectedSymbol);
 
-    // Derive selected sector's metadata (for group check in SectorDetailPanel)
-    const selectedMeta = [...(benchmarks ?? []), ...(sectors ?? [])]
-        .find((s) => s.symbol === selectedSymbol) ?? null;
+    // Determine if the selected symbol is a benchmark (no Stocks tab for those)
+    const isBenchmark = selectedSymbol
+        ? [...(benchmarks ?? [])].some((b) => b.symbol === selectedSymbol)
+        : false;
 
     const handleSelect = (symbol) => {
         setSelectedSymbol(symbol);
-        // Scroll panel into view after a brief render delay
+        // Scroll chart into view after a brief render delay
         if (symbol) {
             setTimeout(() => {
                 document.getElementById('markets-chart-panel')?.scrollIntoView({
@@ -145,21 +147,21 @@ export default function MarketsPage() {
                         <Typography
                             component="h1"
                             sx={{
-                                fontSize:      { xs: '1.6rem', md: '2rem' },
-                                fontWeight:    700,
+                                fontSize: { xs: '1.6rem', md: '2rem' },
+                                fontWeight: 700,
                                 letterSpacing: '-0.03em',
-                                color:         '#e8e8ed',
-                                lineHeight:    1.2,
+                                color: '#e8e8ed',
+                                lineHeight: 1.2,
                             }}
                         >
                             Markets
                         </Typography>
                         <Box sx={{
-                            px:           '8px',
-                            py:           '3px',
+                            px: '8px',
+                            py: '3px',
                             borderRadius: '6px',
-                            background:   'rgba(34,197,94,0.1)',
-                            border:       '1px solid rgba(34,197,94,0.2)',
+                            background: 'rgba(34,197,94,0.1)',
+                            border: '1px solid rgba(34,197,94,0.2)',
                         }}>
                             <Typography sx={{ fontSize: '0.62rem', color: '#22c55e', fontWeight: 700, letterSpacing: '0.1em' }}>
                                 NSE LIVE
@@ -175,12 +177,12 @@ export default function MarketsPage() {
                 <Box
                     className="animate-fade-in-up delay-1"
                     sx={{
-                        display:        'flex',
-                        alignItems:     { xs: 'flex-start', sm: 'center' },
-                        flexDirection:  { xs: 'column', sm: 'row' },
+                        display: 'flex',
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        flexDirection: { xs: 'column', sm: 'row' },
                         justifyContent: 'space-between',
-                        gap:            1.5,
-                        mb:             3.5,
+                        gap: 1.5,
+                        mb: 3.5,
                     }}
                 >
                     <Typography sx={{ fontSize: '0.72rem', color: '#5a5a6e', letterSpacing: '0.06em' }}>
@@ -202,20 +204,20 @@ export default function MarketsPage() {
 
                 {/* ── Divider ── */}
                 <Box sx={{
-                    height:     '1px',
+                    height: '1px',
                     background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
-                    mb:         3.5,
+                    mb: 3.5,
                 }} />
 
                 {/* ── Table ── */}
                 <Box className="animate-fade-in-up delay-3" sx={{ mb: 2 }}>
                     <Typography sx={{
-                        fontSize:      '0.62rem',
-                        fontWeight:    600,
+                        fontSize: '0.62rem',
+                        fontWeight: 600,
                         letterSpacing: '0.12em',
-                        color:         '#5a5a6e',
+                        color: '#5a5a6e',
                         textTransform: 'uppercase',
-                        mb:            1.25,
+                        mb: 1.25,
                     }}>
                         All Indices
                     </Typography>
@@ -228,15 +230,15 @@ export default function MarketsPage() {
                     />
                 </Box>
 
-                {/* ── Inline detail panel (stocks + chart tabs) ── */}
                 <Box id="markets-chart-panel">
                     <SectorDetailPanel
-                        sectorSummary={selectedMeta}
-                        detailData={detailData}
-                        detailLoading={detailLoading}
-                        detailError={detailError}
-                        selectedPeriod={selectedPeriod}
+                        symbol={selectedSymbol}
+                        isBenchmark={isBenchmark}
+                        data={detailData}
+                        loading={detailLoading}
+                        error={detailError}
                         onClose={() => setSelectedSymbol(null)}
+                        activePeriod={selectedPeriod}
                     />
                 </Box>
 

@@ -1,15 +1,14 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
-import useSectorStocks from '../hooks/useSectorStocks';
 import SectorStocksTable from './SectorStocksTable';
+import { useSectorStocks }  from '../hooks/useSectorStocks';
 
 // Lazy-load the heavy Recharts bundle
 const PriceChartCard = lazy(() =>
     import('../../stock-analysis/components/PriceChartCard')
 );
 
-// ── Loading skeleton ───────────────────────────────────────────────────────────
-
+// ── Chart skeleton ─────────────────────────────────────────────────────────────
 function ChartSkeleton() {
     return (
         <Box sx={{ p: { xs: 2, md: 3 } }}>
@@ -20,98 +19,103 @@ function ChartSkeleton() {
 }
 
 // ── Tab button ─────────────────────────────────────────────────────────────────
-
-function TabButton({ label, active, onClick }) {
+function Tab({ label, active, onClick, count }) {
     return (
         <Box
             component="button"
             onClick={onClick}
             sx={{
-                px:           1.5,
-                py:           0.6,
+                px: 1.5, py: 0.75,
                 borderRadius: '6px',
-                border:       '1px solid transparent',
-                background:   active ? 'rgba(6,182,212,0.12)' : 'transparent',
-                color:        active ? '#06b6d4' : '#5a5a6e',
-                fontSize:     '0.72rem',
-                fontWeight:   active ? 600 : 400,
-                cursor:       'pointer',
-                fontFamily:   'inherit',
-                transition:   'all 0.15s',
-                borderColor:  active ? 'rgba(6,182,212,0.35)' : 'transparent',
+                border: `1px solid ${active ? 'rgba(6,182,212,0.4)' : 'transparent'}`,
+                background: active ? 'rgba(6,182,212,0.1)' : 'transparent',
+                color: active ? '#06b6d4' : '#5a5a6e',
+                fontSize: '0.72rem',
+                fontWeight: active ? 600 : 400,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.75,
+                transition: 'all 0.15s',
                 '&:hover': {
-                    color:      active ? '#06b6d4' : '#c8c8d0',
-                    background: active ? 'rgba(6,182,212,0.16)' : 'rgba(255,255,255,0.04)',
+                    color: active ? '#06b6d4' : '#8a8a9a',
+                    background: active ? 'rgba(6,182,212,0.1)' : 'rgba(255,255,255,0.04)',
                 },
             }}
         >
             {label}
+            {count != null && (
+                <Box sx={{
+                    px: '5px', py: '1px',
+                    borderRadius: '4px',
+                    background: active ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.07)',
+                    fontSize: '0.58rem',
+                    fontWeight: 700,
+                    color: active ? '#06b6d4' : '#5a5a6e',
+                    lineHeight: 1.5,
+                }}>
+                    {count}
+                </Box>
+            )}
         </Box>
     );
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
-
+// ── Main component ─────────────────────────────────────────────────────────────
 /**
  * SectorDetailPanel
  *
- * Inline panel that opens when a sector/benchmark tile is selected.
+ * Unified panel with two tabs for sector indices: [Stocks | Chart]
+ * For benchmarks (isBenchmark=true), only the Chart tab is shown — no tab bar.
  *
- * For SECTORS: shows two tabs — [Stocks (n)] | [Chart]
- *   - Stocks tab (default): constituent stock returns table
- *   - Chart tab: full price chart with DMA overlays
- *
- * For BENCHMARKS: shows Chart tab only (no Stocks tab).
- *
- * @param {object|null} sectorSummary   Summary object from useMarkets (has .group, .symbol, .name)
- * @param {object|null} detailData      Full chart data from useMarketDetail
- * @param {boolean}     detailLoading   True while detail data is fetching
- * @param {string|null} detailError     Error from detail fetch
- * @param {string}      selectedPeriod  Active period key — drives default sort in stocks table
- * @param {function}    onClose         Called when close button is clicked
+ * Props:
+ *   symbol        — currently selected symbol, e.g. '^CNXIT'
+ *   isBenchmark   — true for NIFTY 50 / 100 / 200 / MIDCAP 150
+ *   data          — full sector data from useMarketDetail (chart data)
+ *   loading       — chart data loading state
+ *   error         — chart data error
+ *   onClose       — called when ✕ is clicked
+ *   activePeriod  — heatmap period key ('r1m' | 'r3m' | 'r6m' | 'r1y' | 'r2y')
  */
 export default function SectorDetailPanel({
-    sectorSummary,
-    detailData,
-    detailLoading,
-    detailError,
-    selectedPeriod,
+    symbol,
+    isBenchmark = false,
+    data,
+    loading,
+    error,
     onClose,
+    activePeriod = 'r1y',
 }) {
-    const isBenchmark = sectorSummary?.group === 'benchmark';
-
-    // Benchmarks default to chart; sectors default to stocks
+    // ── Tab state ──────────────────────────────────────────────────────────────
+    // Benchmarks always show chart; sectors default to stocks tab
     const [activeTab, setActiveTab] = useState(isBenchmark ? 'chart' : 'stocks');
 
-    // Reset tab when sector changes
+    // Reset to stocks tab whenever a new sector is selected
     useEffect(() => {
         setActiveTab(isBenchmark ? 'chart' : 'stocks');
-    }, [sectorSummary?.symbol, isBenchmark]);
+    }, [symbol, isBenchmark]);
 
-    // Fetch constituent stocks (hook skips for benchmarks automatically)
+    // ── Stocks data ────────────────────────────────────────────────────────────
     const {
-        stocks,
-        sectorReturns,
-        totalStocks,
+        data:    stocksData,
         loading: stocksLoading,
         error:   stocksError,
-    } = useSectorStocks(sectorSummary?.symbol, sectorSummary?.group);
+    } = useSectorStocks(symbol, isBenchmark);
 
-    if (!sectorSummary) return null;
+    if (!symbol) return null;
 
-    const stocksLabel = stocksLoading
-        ? '📊 Stocks'
-        : `📊 Stocks (${totalStocks})`;
+    const stockCount = stocksData?.totalStocks ?? null;
 
     return (
         <Box
+            className="animate-fade-in-up"
             sx={{
-                mt:           2,
+                mt: 2,
                 background:   'rgba(255,255,255,0.02)',
                 border:       '1px solid rgba(255,255,255,0.07)',
                 borderRadius: '14px',
                 overflow:     'hidden',
-                animation:    'fadeInUp 0.25s ease-out forwards',
             }}
         >
             {/* ── Panel header ── */}
@@ -119,45 +123,50 @@ export default function SectorDetailPanel({
                 display:        'flex',
                 alignItems:     'center',
                 justifyContent: 'space-between',
-                px:             { xs: 2, md: 3 },
-                pt:             2,
-                pb:             1.5,
-                borderBottom:   '1px solid rgba(255,255,255,0.05)',
-                flexWrap:       'wrap',
-                gap:            1,
+                px: { xs: 2, md: 3 },
+                pt: 2,
+                pb: 1.5,
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                flexWrap: 'wrap',
+                gap: 1.5,
             }}>
-                {/* Left: name + subtitle */}
+                {/* Left: name + meta */}
                 <Box>
-                    <Typography sx={{ fontSize: '0.95rem', fontWeight: 600, color: '#e8e8ed' }}>
-                        {sectorSummary.name}
+                    <Typography sx={{
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                        color: '#e8e8ed',
+                    }}>
+                        {data?.name ?? symbol}
                     </Typography>
-                    {detailData && (
-                        <Typography sx={{ fontSize: '0.7rem', color: '#5a5a6e', mt: 0.25 }}>
-                            {detailData.totalDays} trading days · updated{' '}
-                            {new Date(detailData.lastUpdated).toLocaleDateString('en-IN', {
+                    {data && (
+                        <Typography sx={{ fontSize: '0.68rem', color: '#5a5a6e', mt: 0.25 }}>
+                            {data.totalDays} trading days · last updated{' '}
+                            {new Date(data.lastUpdated).toLocaleDateString('en-IN', {
                                 day: 'numeric', month: 'short', year: 'numeric',
                             })}
                         </Typography>
                     )}
                 </Box>
 
-                {/* Right: tabs + close */}
+                {/* Right: tabs (sectors only) + close */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {/* Stocks tab only for sectors */}
                     {!isBenchmark && (
-                        <TabButton
-                            label={stocksLabel}
-                            active={activeTab === 'stocks'}
-                            onClick={() => setActiveTab('stocks')}
-                        />
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Tab
+                                label="📊 Stocks"
+                                count={stockCount}
+                                active={activeTab === 'stocks'}
+                                onClick={() => setActiveTab('stocks')}
+                            />
+                            <Tab
+                                label="📈 Chart"
+                                active={activeTab === 'chart'}
+                                onClick={() => setActiveTab('chart')}
+                            />
+                        </Box>
                     )}
-                    <TabButton
-                        label="📈 Chart"
-                        active={activeTab === 'chart'}
-                        onClick={() => setActiveTab('chart')}
-                    />
 
-                    {/* Close */}
                     <Box
                         component="button"
                         onClick={onClose}
@@ -168,67 +177,67 @@ export default function SectorDetailPanel({
                             borderRadius: '6px',
                             color:        '#8a8a9a',
                             fontSize:     '0.8rem',
-                            px:           1.25,
+                            px:           1.5,
                             py:           0.5,
                             cursor:       'pointer',
                             transition:   'all 0.15s',
                             fontFamily:   'inherit',
-                            ml:           0.5,
-                            '&:hover': { background: 'rgba(255,255,255,0.08)', color: '#e8e8ed' },
+                            flexShrink:   0,
+                            '&:hover': {
+                                background:  'rgba(255,255,255,0.08)',
+                                color:       '#e8e8ed',
+                                borderColor: 'rgba(255,255,255,0.14)',
+                            },
                         }}
                     >
-                        ✕
+                        ✕ Close
                     </Box>
                 </Box>
             </Box>
 
-            {/* ── Tab content ── */}
-            <Box sx={{ px: { xs: 1, md: 2 }, pb: 2 }}>
+            {/* ── Tab body ── */}
+            <Box sx={{ px: { xs: 1.5, md: 3 }, py: 2 }}>
 
-                {/* Stocks tab */}
-                {activeTab === 'stocks' && !isBenchmark && (
-                    <Box sx={{ pt: 1 }}>
-                        <SectorStocksTable
-                            stocks={stocks}
-                            sectorReturns={sectorReturns}
-                            sectorName={sectorSummary.name}
-                            selectedPeriod={selectedPeriod}
-                            loading={stocksLoading}
-                            error={stocksError}
-                        />
-                    </Box>
+                {/* ── Stocks tab ── */}
+                {activeTab === 'stocks' && (
+                    <SectorStocksTable
+                        data={stocksData}
+                        loading={stocksLoading}
+                        error={stocksError}
+                        activePeriod={activePeriod}
+                    />
                 )}
 
-                {/* Chart tab */}
+                {/* ── Chart tab ── */}
                 {activeTab === 'chart' && (
                     <>
-                        {detailLoading && <ChartSkeleton />}
+                        {loading && <ChartSkeleton />}
 
-                        {!detailLoading && detailError && (
+                        {!loading && error && (
                             <Box sx={{ p: 4, textAlign: 'center' }}>
                                 <Typography sx={{ fontSize: '0.85rem', color: '#ef4444', mb: 1 }}>
                                     Failed to load chart data
                                 </Typography>
                                 <Typography sx={{ fontSize: '0.75rem', color: '#5a5a6e' }}>
-                                    {detailError}
+                                    {error}
                                 </Typography>
                             </Box>
                         )}
 
-                        {!detailLoading && !detailError && detailData && (
+                        {!loading && !error && data && (
                             <Suspense fallback={<ChartSkeleton />}>
                                 <PriceChartCard
-                                    ticker={detailData.symbol}
-                                    historicalCloses={detailData.historicalCloses}
-                                    historicalDates={detailData.historicalDates}
-                                    historicalVolumes={detailData.historicalVolumes}
-                                    dma50Series={detailData.dma50Series}
-                                    dma200Series={detailData.dma200Series}
-                                    latestClose={detailData.latestClose}
-                                    dma50={detailData.dma50}
-                                    dma200={detailData.dma200}
-                                    trend={detailData.trend}
-                                    hasVolume={detailData.hasVolume}
+                                    ticker={data.symbol}
+                                    historicalCloses={data.historicalCloses}
+                                    historicalDates={data.historicalDates}
+                                    historicalVolumes={data.historicalVolumes}
+                                    dma50Series={data.dma50Series}
+                                    dma200Series={data.dma200Series}
+                                    latestClose={data.latestClose}
+                                    dma50={data.dma50}
+                                    dma200={data.dma200}
+                                    trend={data.trend}
+                                    hasVolume={data.hasVolume}
                                     rsiSeries={null}
                                 />
                             </Suspense>

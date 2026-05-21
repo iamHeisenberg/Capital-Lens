@@ -3,42 +3,47 @@
 /**
  * marketsRoutes.js
  *
- * Three endpoints:
+ * Two endpoints:
  *
  *   GET /api/markets
  *     Returns lightweight summary for ALL sectors and indices (no historical arrays).
+ *     Reads all 15 cache keys in parallel — fast even on first load.
  *     Response: { benchmarks: [...summaries], sectors: [...summaries] }
  *
  *   GET /api/markets/:symbol
- *     Returns full data (historicalCloses, dma series etc.) for ONE symbol.
- *     Symbol must be URL-encoded: encodeURIComponent('^NSEI') = '%5ENSEI'.
+ *     Returns full data (including historicalCloses, dma series etc.) for ONE symbol.
+ *     Symbol must be URL-encoded by the caller: encodeURIComponent('^NSEI') = '%5ENSEI'.
+ *     Express decodes req.params.symbol back to '^NSEI' automatically.
+ *     Validates against the sectors.json allowlist to prevent arbitrary YF lookups.
+ *     Response: full getSectorData() object
+ *
  *
  *   GET /api/markets/:symbol/stocks
- *     Returns constituent stock returns for a sector index.
- *     Only available for sectors (group='sector') — benchmarks return 404.
- *     Reads stock price cache in parallel, computes 1M/3M/6M/1Y/2Y returns.
+ *     Returns multi-period returns for all constituent stocks of a sector index.
+ *     Only valid for sector indices (not benchmarks — those have no mapped constituents).
+ *     Reads individual stock price caches in parallel — no fresh Yahoo Finance calls.
+ *     Stocks absent from Redis are marked available:false (no error thrown).
  *     Response: { sectorSymbol, sectorName, sectorReturns, stocks[], totalStocks, availableStocks }
  *
  * All endpoints support ?refresh=true to bypass the cache.
  */
 
-const express = require('express');
-const router  = express.Router();
-const logger  = require('../utils/logger');
+const express  = require('express');
+const router   = express.Router();
+const logger   = require('../utils/logger');
 const { getSectorData, toSummary } = require('../services/sectorService');
 const { getStockData }             = require('../services/priceService');
 const { getCache, cacheKeys }      = require('../services/cacheService');
 
-// ── Sector catalog (allowlist + metadata source) ───────────────────────────────
-const SECTORS = require('../../frontend/src/data/sectors.json');
-
-// ── Constituent stock mapping (sector → stock list) ────────────────────────────
+// ── Static catalogs ────────────────────────────────────────────────────────────
+const SECTORS      = require('../../frontend/src/data/sectors.json');
 const CONSTITUENTS = require('../../frontend/src/data/sectorConstituents.json');
 
 // Index by upper-cased symbol for O(1) lookup
 const SECTOR_MAP = new Map(
     SECTORS.map((s) => [s.symbol.toUpperCase(), s])
 );
+
 
 // ── GET /api/markets ───────────────────────────────────────────────────────────
 /**
@@ -150,17 +155,15 @@ router.get('/markets/:symbol', async (req, res) => {
     }
 });
 
-// ── GET /api/markets/:symbol/stocks ───────────────────────────────────────────
+// ── GET /api/markets/:symbol/stocks ─────────────────────────────────────────
 /**
- * Returns constituent stock returns for a single sector index.
- * Only available for group='sector' entries — benchmarks have no constituent map.
+ * Returns multi-period returns for each constituent stock of a sector index.
  *
- * Strategy:
- *   1. Validate symbol is a known sector (not benchmark)
- *   2. Look up constituent list from sectorConstituents.json
- *   3. Parallel getStockData() for each constituent (cache-hit → instant, miss → YF fetch + cache)
- *   4. Compute 1M/3M/6M/1Y/2Y returns from historicalCloses server-side
- *   5. Return structured response (frontend re-sorts by selectedPeriod)
+ * Uses getStockData (cache-first): reads from Redis if available; falls back to
+ * a fresh Yahoo Finance fetch only on cache miss. This ensures the stocks table
+ * always shows real data, not just "—" on a cold cache.
+ *
+ * The sector's own pre-computed returns are included for the reference row.
  */
 router.get('/markets/:symbol/stocks', async (req, res) => {
     const rawSymbol   = req.params.symbol;
@@ -173,7 +176,7 @@ router.get('/markets/:symbol/stocks', async (req, res) => {
         symbol:        upperSymbol,
     };
 
-    // ── Allowlist validation ────────────────────────────────────────────────────
+    // ── Validate against sector allowlist ──────────────────────────────────────
     const meta = SECTOR_MAP.get(upperSymbol);
     if (!meta) {
         return res.status(404).json({
@@ -181,92 +184,91 @@ router.get('/markets/:symbol/stocks', async (req, res) => {
         });
     }
 
-    // ── Benchmarks have no constituent map ─────────────────────────────────────
-    if (meta.group === 'benchmark') {
+    // ── Check constituent mapping exists ──────────────────────────────────────
+    const constituentList = CONSTITUENTS[meta.symbol];
+    if (!constituentList || constituentList.length === 0) {
         return res.status(404).json({
-            error: `Constituent data is not available for benchmark indices.`,
+            error: `No constituent data available for '${rawSymbol}'. Only sector indices (not benchmarks) have constituent mappings.`,
         });
     }
 
-    // ── Look up constituent list ────────────────────────────────────────────────
-    const constituents = CONSTITUENTS[meta.symbol] || CONSTITUENTS[upperSymbol];
-    if (!constituents || constituents.length === 0) {
-        return res.status(404).json({
-            error: `No constituent list found for '${rawSymbol}'.`,
-        });
-    }
-
-    // ── Fetch sector data (for sectorReturns reference) ────────────────────────
-    // Read from cache only — do not force a fresh fetch on every /stocks call
-    let sectorSummary = null;
     try {
-        sectorSummary = await getCache(cacheKeys.sector(meta.symbol), ctx);
-    } catch (_) { /* non-fatal — sectorReturns will be null */ }
+        // ── Read sector cache for reference returns ────────────────────────────
+        // Used to populate the reference row in the frontend's stocks table.
+        const sectorCache = await getSectorData(meta.symbol, { ctx, meta });
+        const sectorReturns = sectorCache?.returns ?? null;
 
-    // ── Parallel stock cache reads ──────────────────────────────────────────────
-    const PERIOD_DAYS = { r1m: 21, r3m: 63, r6m: 126, r1y: 252, r2y: 494 };
+        // ── Compute return helper (same formula as sectorService) ─────────────────
+        const PERIOD_DAYS = { r1m: 21, r3m: 63, r6m: 126, r1y: 252, r2y: 494 };
 
-    function computeReturn(closes, tradingDays) {
-        if (!Array.isArray(closes) || closes.length < tradingDays + 1) return null;
-        const latest = closes[closes.length - 1];
-        const past   = closes[closes.length - 1 - tradingDays];
-        if (latest == null || past == null || !isFinite(latest) || !isFinite(past) || past === 0) return null;
-        return +(((latest - past) / past) * 100).toFixed(2);
-    }
+        function computeReturn(closes, days) {
+            if (!Array.isArray(closes) || closes.length < days + 1) return null;
+            const latest = closes[closes.length - 1];
+            const past   = closes[closes.length - 1 - days];
+            if (!latest || !past || !isFinite(latest) || !isFinite(past) || past === 0) return null;
+            return +(((latest - past) / past) * 100).toFixed(2);
+        }
 
-    const stockResults = await Promise.allSettled(
-        constituents.map(async (entry) => {
-            const ticker = entry.symbol.toUpperCase().endsWith('.NS')
-                ? entry.symbol
-                : entry.symbol + '.NS';
+        // ── Fetch constituent stocks (cache-first, Yahoo fallback) ─────────────────
+        const results = await Promise.allSettled(
+            constituentList.map((stock) =>
+                getStockData(stock.symbol, { ctx })
+            )
+        );
 
-            // Use getStockData (cache-or-fetch) so this works even when stocks
-            // haven't been individually seeded — Render caches on first hit.
-            const stockData = await getStockData(ticker, { ctx });
+        let availableStocks = 0;
 
-            if (!stockData || !Array.isArray(stockData.historicalCloses)) {
-                return { symbol: entry.symbol, name: entry.name, available: false, latestClose: null, returns: null };
+        const stocks = results.map((result, i) => {
+            const stock = constituentList[i];
+
+            if (result.status === 'rejected' || !result.value) {
+                logger.warn('Stock data unavailable for constituent', {
+                    ...ctx, constituent: stock.symbol,
+                    reason: result.reason?.message ?? 'no data returned',
+                });
+                return {
+                    symbol:      stock.symbol,
+                    name:        stock.name,
+                    latestClose: null,
+                    returns:     null,
+                    available:   false,
+                };
             }
 
-            const closes  = stockData.historicalCloses;
+            const cached  = result.value;
+            const closes  = cached.historicalCloses ?? [];
             const returns = {};
+
             for (const [key, days] of Object.entries(PERIOD_DAYS)) {
                 returns[key] = computeReturn(closes, days);
             }
 
+            availableStocks++;
             return {
-                symbol:      entry.symbol,
-                name:        entry.name,
-                latestClose: closes[closes.length - 1] ?? null,
+                symbol:      stock.symbol,
+                name:        stock.name,
+                latestClose: cached.latestClose ?? null,
                 returns,
                 available:   true,
             };
-        })
-    );
-
-    // ── Flatten results ─────────────────────────────────────────────────────────
-    const stocks = stockResults.map((result, i) => {
-        if (result.status === 'fulfilled') return result.value;
-        logger.warn('Stock constituent fetch failed', {
-            ...ctx,
-            stock: constituents[i].symbol,
-            error: result.reason?.message,
         });
-        return { symbol: constituents[i].symbol, name: constituents[i].name, available: false, latestClose: null, returns: null };
-    });
 
-    const availableStocks = stocks.filter((s) => s.available).length;
+        res.json({
+            sectorSymbol:    meta.symbol,
+            sectorName:      meta.name,
+            sectorReturns,
+            stocks,
+            totalStocks:     constituentList.length,
+            availableStocks,
+        });
 
-    logger.info(`/markets/${rawSymbol}/stocks — ${availableStocks}/${stocks.length} available`, ctx);
-
-    res.json({
-        sectorSymbol:  meta.symbol,
-        sectorName:    meta.name,
-        sectorReturns: sectorSummary?.returns ?? null,
-        stocks,
-        totalStocks:   stocks.length,
-        availableStocks,
-    });
+    } catch (err) {
+        const status = err.statusCode || 500;
+        logger.error('Request handler error — /markets/:symbol/stocks', {
+            ...ctx, errorMessage: err.message, statusCode: status,
+        });
+        res.status(status).json({ error: err.message });
+    }
 });
 
 module.exports = router;
