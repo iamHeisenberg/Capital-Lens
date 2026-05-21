@@ -21,8 +21,10 @@
  *   GET /api/markets/:symbol/stocks
  *     Returns multi-period returns for all constituent stocks of a sector index.
  *     Only valid for sector indices (not benchmarks — those have no mapped constituents).
- *     Reads individual stock price caches in parallel — no fresh Yahoo Finance calls.
- *     Stocks absent from Redis are marked available:false (no error thrown).
+ *     Cache-only: reads individual stock price keys directly from Redis via getCache().
+ *     Never calls Yahoo Finance — avoids the 429 rate-limit errors that Render's datacenter
+ *     IP triggers when hitting Yahoo Finance in parallel for 10-15 stocks at once.
+ *     Stocks absent from Redis (cache cold or TTL expired) are marked available:false.
  *     Response: { sectorSymbol, sectorName, sectorReturns, stocks[], totalStocks, availableStocks }
  *
  * All endpoints support ?refresh=true to bypass the cache.
@@ -32,7 +34,9 @@ const express  = require('express');
 const router   = express.Router();
 const logger   = require('../utils/logger');
 const { getSectorData, toSummary } = require('../services/sectorService');
-const { getStockData }             = require('../services/priceService');
+// priceService / getStockData intentionally NOT imported here.
+// The stocks endpoint reads directly from the cache — it must never call
+// Yahoo Finance (Render's datacenter IP is rate-limited and triggers 429s).
 const { getCache, cacheKeys }      = require('../services/cacheService');
 
 // ── Static catalogs ────────────────────────────────────────────────────────────
@@ -209,11 +213,19 @@ router.get('/markets/:symbol/stocks', async (req, res) => {
             return +(((latest - past) / past) * 100).toFixed(2);
         }
 
-        // ── Fetch constituent stocks (cache-first, Yahoo fallback) ─────────────────
+        // ── Read constituent stocks from Redis cache (no Yahoo Finance fallback) ───
+        // We intentionally use getCache() directly instead of getStockData() so that
+        // a cache miss returns null (→ available:false row) rather than triggering a
+        // live Yahoo Finance fetch. On Render, parallel YF calls return 429 every time.
+        // The seeder (seedCache.js --type price) is responsible for keeping keys warm.
         const results = await Promise.allSettled(
-            constituentList.map((stock) =>
-                getStockData(stock.symbol, { ctx })
-            )
+            constituentList.map((stock) => {
+                // Mirror the key normalisation used by priceService / seedCache
+                const nseTicker = stock.symbol.toUpperCase().endsWith('.NS')
+                    ? stock.symbol.toUpperCase()
+                    : stock.symbol.toUpperCase() + '.NS';
+                return getCache(cacheKeys.price(nseTicker), ctx);
+            })
         );
 
         let availableStocks = 0;

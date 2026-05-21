@@ -247,7 +247,7 @@ const getStockData = async (ticker, { forceRefresh = false, ctx = {} } = {}) => 
         responseData.historicalCloses.length > 0;
 
     if (isValidForCache) {
-        await setCache(cacheKey, responseData, 14400, ctx); // 4h TTL
+        await setCache(cacheKey, responseData, 90000, ctx); // 25h TTL (seeder runs daily; +1h buffer so keys never expire between cron runs)
     } else {
         logger.warn('SKIP_CACHE_INVALID_DATA — price data failed validation', {
             ...ctx,

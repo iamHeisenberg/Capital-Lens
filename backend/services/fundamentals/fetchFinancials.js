@@ -209,7 +209,7 @@ const fetchFinancials = async (ticker, ctx = {}, forceRefresh = false) => {
 
     if (isValidForCache) {
         // Cache fundamentals data for 24 hours (86400 seconds)
-        await setCache(cacheKey, responseData, 604800, logCtx); // 7-day TTL — fundamentals change quarterly
+        await setCache(cacheKey, responseData, 648000, logCtx); // 7.5-day TTL (seeder runs weekly; +12h buffer so keys never expire between cron runs)
     } else {
         logger.warn('SKIP_CACHE_INVALID_DATA — fundamentals data failed validation', {
             ...logCtx,

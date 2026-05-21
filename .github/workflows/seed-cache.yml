@@ -1,0 +1,133 @@
+# ── seed-cache.yml ─────────────────────────────────────────────────────────────
+#
+# Keeps the Upstash Redis cache warm so that Capital-Lens never has to call
+# Yahoo Finance from Render (whose datacenter IP is rate-limited and gets 429s).
+#
+# Why two jobs instead of one?
+#   Price data     — TTL 25h   → seeded daily      (cheap; 482 tickers × ~1s)
+#   Fundamentals   — TTL 7.5d  → seeded weekly     (slower; 482 tickers × 2 API calls)
+#   Sectors        — TTL 4h    → piggybacked onto the daily price job
+#
+# Standard cron only fires at fixed UTC clock times, not rolling intervals
+# (i.e. you cannot write "every 23h 45m" directly in cron syntax).
+# Instead we run at a fixed daily/weekly time and set the TTLs slightly *above*
+# those intervals so keys never expire between runs:
+#
+#   Price     : cron every 24h at 02:00 UTC  → TTL = 25h  (1h overlap buffer)
+#   Fundamentals: cron every 7d  on Mon 03:00 UTC → TTL = 7.5d (12h overlap buffer)
+#
+# Required GitHub repository secrets (Settings → Secrets → Actions):
+#   UPSTASH_REDIS_REST_URL
+#   UPSTASH_REDIS_REST_TOKEN
+#
+# Manual trigger: Actions tab → "Seed Redis Cache" → Run workflow
+#   Use the `seed_type` input to run a specific type on-demand (e.g. before an interview).
+# ───────────────────────────────────────────────────────────────────────────────
+
+name: Seed Redis Cache
+
+on:
+  schedule:
+    # ── Daily at 02:00 UTC — seeds price + sectors ─────────────────────────────
+    # Covers Asia market open data by ~07:30 IST.
+    - cron: '0 2 * * *'
+
+    # ── Weekly on Monday at 03:00 UTC — seeds fundamentals ─────────────────────
+    # Runs once per week; fundamentals data changes quarterly.
+    - cron: '0 3 * * 1'
+
+  # Manual trigger — useful for warming the cache before a demo or interview
+  workflow_dispatch:
+    inputs:
+      seed_type:
+        description: 'What to seed: price | fundamentals | sectors | all'
+        required: true
+        default: 'price'
+        type: choice
+        options:
+          - price
+          - fundamentals
+          - sectors
+          - all
+
+# Cancel any in-progress run for the same workflow to avoid duplicate seeding
+concurrency:
+  group: seed-cache-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ── Job 1: Price + Sectors (daily) ───────────────────────────────────────────
+  seed-price:
+    name: Seed Price + Sectors Cache
+    runs-on: ubuntu-latest
+
+    # Run when:
+    #   (a) scheduled daily cron fired, OR
+    #   (b) manually triggered with seed_type = price | sectors | all
+    if: |
+      github.event_name == 'schedule' && github.event.schedule == '0 2 * * *'
+      || github.event_name == 'workflow_dispatch' && contains(fromJson('["price","sectors","all"]'), inputs.seed_type)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Seed price cache (482 tickers — ~6 min)
+        run: node scripts/seedCache.js --type price
+        working-directory: backend
+        env:
+          UPSTASH_REDIS_REST_URL:   ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+
+      - name: Seed sectors cache (15 symbols — ~15 sec)
+        run: node scripts/seedCache.js --type sectors
+        working-directory: backend
+        env:
+          UPSTASH_REDIS_REST_URL:   ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+
+  # ── Job 2: Fundamentals (weekly) ─────────────────────────────────────────────
+  seed-fundamentals:
+    name: Seed Fundamentals Cache
+    runs-on: ubuntu-latest
+
+    # Run when:
+    #   (a) scheduled weekly cron fired, OR
+    #   (b) manually triggered with seed_type = fundamentals | all
+    if: |
+      github.event_name == 'schedule' && github.event.schedule == '0 3 * * 1'
+      || github.event_name == 'workflow_dispatch' && contains(fromJson('["fundamentals","all"]'), inputs.seed_type)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Seed fundamentals cache (482 tickers — ~12 min)
+        run: node scripts/seedCache.js --type fundamentals
+        working-directory: backend
+        env:
+          UPSTASH_REDIS_REST_URL:   ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
