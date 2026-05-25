@@ -176,8 +176,8 @@
     "name": "SBI Life Insurance"
   },
   {
-    "symbol": "TATAMOTORS.NS",
-    "name": "Tata Motors"
+    "symbol": "TMPV.NS",
+    "name": "Tata Motors Passenger Vehicles Ltd"
   },
   {
     "symbol": "TATASTEEL.NS",
@@ -292,7 +292,7 @@
     "name": "PI Industries"
   },
   {
-    "symbol": "DEEPAKNITR.NS",
+    "symbol": "DEEPAKNTL.NS",
     "name": "Deepak Nitrite"
   },
   {
@@ -436,7 +436,7 @@
     "name": "MRF"
   },
   {
-    "symbol": "AMARARAJA.NS",
+    "symbol": "ARE&M.NS",
     "name": "Amara Raja Energy & Mobility"
   },
   {
@@ -476,7 +476,7 @@
     "name": "Mahindra & Mahindra Financial Services"
   },
   {
-    "symbol": "LICHOUSING.NS",
+    "symbol": "LICHSGFIN.NS",
     "name": "LIC Housing Finance"
   },
   {
@@ -524,7 +524,7 @@
     "name": "Alkem Laboratories"
   },
   {
-    "symbol": "IPCA.NS",
+    "symbol": "IPCALAB.NS",
     "name": "IPCA Laboratories"
   },
   {
@@ -548,11 +548,11 @@
     "name": "Radico Khaitan"
   },
   {
-    "symbol": "MCDOWELL-N.NS",
+    "symbol": "UNITDSPR.NS",
     "name": "United Spirits"
   },
   {
-    "symbol": "AMBUJACEMENT.NS",
+    "symbol": "AMBUJACEM.NS",
     "name": "Ambuja Cements"
   },
   {
@@ -564,7 +564,7 @@
     "name": "Shree Cement"
   },
   {
-    "symbol": "DALMIACENT.NS",
+    "symbol": "DALBHARAT.NS",
     "name": "Dalmia Bharat"
   },
   {
@@ -656,7 +656,7 @@
     "name": "KEC International"
   },
   {
-    "symbol": "KALPATPOWR.NS",
+    "symbol": "KPIL.NS",
     "name": "Kalpataru Projects"
   },
   {
@@ -716,7 +716,7 @@
     "name": "IRCTC"
   },
   {
-    "symbol": "INTERGLOBE.NS",
+    "symbol": "INDIGO.NS",
     "name": "IndiGo (InterGlobe Aviation)"
   },
   {
@@ -784,7 +784,7 @@
     "name": "Mahanagar Telephone Nigam"
   },
   {
-    "symbol": "VINATI.NS",
+    "symbol": "VINATIORGA.NS",
     "name": "Vinati Organics"
   },
   {
@@ -832,7 +832,7 @@
     "name": "Polycab India"
   },
   {
-    "symbol": "FINOLEX.NS",
+    "symbol": "FINCABLES.NS",
     "name": "Finolex Cables"
   },
   {
@@ -840,8 +840,8 @@
     "name": "KEI Industries"
   },
   {
-    "symbol": "HBLPOWER.NS",
-    "name": "HBL Power Systems"
+    "symbol": "HBLENGINE.NS",
+    "name": "HBL Engineering"
   },
   {
     "symbol": "DIXON.NS",
@@ -912,11 +912,11 @@
     "name": "Prince Pipes & Fittings"
   },
   {
-    "symbol": "FINOLEX.NS",
+    "symbol": "FINPIPE.NS",
     "name": "Finolex Industries"
   },
   {
-    "symbol": "APCOTEX.NS",
+    "symbol": "APCOTEXIND.NS",
     "name": "Apcotex Industries"
   },
   {
@@ -992,7 +992,7 @@
     "name": "CreditAccess Grameen"
   },
   {
-    "symbol": "ARMAN.NS",
+    "symbol": "ARMANFIN.NS",
     "name": "Arman Financial Services"
   },
   {
@@ -1024,10 +1024,6 @@
     "name": "Medplus Health Services"
   },
   {
-    "symbol": "HEALTHSYS.NS",
-    "name": "Health System"
-  },
-  {
     "symbol": "JBMA.NS",
     "name": "JBM Auto"
   },
@@ -1048,28 +1044,20 @@
     "name": "Delhivery"
   },
   {
-    "symbol": "MAHINDCIE.NS",
-    "name": "Mahindra CIE Automotive"
-  },
-  {
-    "symbol": "SUNDRESFAS.NS",
+    "symbol": "SUNDRMFAST.NS",
     "name": "Sundram Fasteners"
   },
   {
-    "symbol": "WABCOINDIA.NS",
-    "name": "WABCO India"
+    "symbol": "ZFCVINDIA.NS",
+    "name": "ZF Commercial Vehicle Control System India"
   },
   {
     "symbol": "SUBROS.NS",
     "name": "Subros"
   },
   {
-    "symbol": "MINDA.NS",
+    "symbol": "MINDACORP.NS",
     "name": "Uno Minda"
-  },
-  {
-    "symbol": "MNGLORP.NS",
-    "name": "Mangalore Refinery & Petrochemicals"
   },
   {
     "symbol": "MRPL.NS",
@@ -1120,7 +1108,7 @@
     "name": "Capacite Infraprojects"
   },
   {
-    "symbol": "KNR.NS",
+    "symbol": "KNRCON.NS",
     "name": "KNR Constructions"
   },
   {
@@ -1176,7 +1164,7 @@
     "name": "GHCL"
   },
   {
-    "symbol": "ANUPAMRAS.NS",
+    "symbol": "ANURAS.NS",
     "name": "Anupam Rasayan India"
   },
   {
@@ -1204,11 +1192,11 @@
     "name": "Cera Sanitaryware"
   },
   {
-    "symbol": "KAJARIA.NS",
+    "symbol": "KAJARIACER.NS",
     "name": "Kajaria Ceramics"
   },
   {
-    "symbol": "SOMANYCER.NS",
+    "symbol": "SOMANYCERA.NS",
     "name": "Somany Ceramics"
   },
   {
@@ -1224,7 +1212,7 @@
     "name": "Senco Gold"
   },
   {
-    "symbol": "PN1.NS",
+    "symbol": "PNGJL.NS",
     "name": "P N Gadgil Jewellers"
   },
   {
@@ -1244,8 +1232,8 @@
     "name": "Jubilant Foodworks"
   },
   {
-    "symbol": "BARBEQUE.NS",
-    "name": "Barbeque Nation Hospitality"
+    "symbol": "UFBL.NS",
+    "name": "Barbeque Nation United Foodbrands"
   },
   {
     "symbol": "NRBBEARING.NS",
@@ -1272,11 +1260,11 @@
     "name": "Carysil"
   },
   {
-    "symbol": "GREAVES.NS",
+    "symbol": "GREAVESCOT.NS",
     "name": "Greaves Cotton"
   },
   {
-    "symbol": "KIRLOSKAR.NS",
+    "symbol": "KIRLOSBROS.NS",
     "name": "Kirloskar Brothers"
   },
   {
@@ -1306,10 +1294,6 @@
   {
     "symbol": "IDEAFORGE.NS",
     "name": "ideaForge Technology"
-  },
-  {
-    "symbol": "DRONAGIRI.NS",
-    "name": "Dronagiri"
   },
   {
     "symbol": "MAPMYINDIA.NS",
@@ -1364,8 +1348,8 @@
     "name": "Welspun Corp"
   },
   {
-    "symbol": "WELSPUNIND.NS",
-    "name": "Welspun India"
+    "symbol": "WELSPUNLIV.NS",
+    "name": "Welspun Living"
   },
   {
     "symbol": "ARVIND.NS",
@@ -1388,10 +1372,6 @@
     "name": "CRISIL"
   },
   {
-    "symbol": "BRICKWORK.NS",
-    "name": "Brickwork Ratings India"
-  },
-  {
     "symbol": "REDINGTON.NS",
     "name": "Redington"
   },
@@ -1408,7 +1388,7 @@
     "name": "Jyoti Structures"
   },
   {
-    "symbol": "GEPIL.NS",
+    "symbol": "GVPIL.NS",
     "name": "GE Power India"
   },
   {
@@ -1424,12 +1404,8 @@
     "name": "Suprajit Engineering"
   },
   {
-    "symbol": "SANDHARTECH.NS",
+    "symbol": "SANDHAR.NS",
     "name": "Sandhar Technologies"
-  },
-  {
-    "symbol": "SHRIRAMLIFE.NS",
-    "name": "Shriram Life Insurance"
   },
   {
     "symbol": "BAJAJHLDNG.NS",
@@ -1496,11 +1472,7 @@
     "name": "Network18 Media & Investments"
   },
   {
-    "symbol": "TV18BRDCST.NS",
-    "name": "TV18 Broadcast"
-  },
-  {
-    "symbol": "HGSLTD.NS",
+    "symbol": "HGS.NS",
     "name": "HGS (Hinduja Global Solutions)"
   },
   {
@@ -1508,7 +1480,7 @@
     "name": "Life Insurance Corporation of India"
   },
   {
-    "symbol": "JSPL.NS",
+    "symbol": "JINDALSTEEL.NS",
     "name": "Jindal Steel & Power"
   },
   {
@@ -1524,7 +1496,7 @@
     "name": "Natco Pharma"
   },
   {
-    "symbol": "STRIDES.NS",
+    "symbol": "STAR.NS",
     "name": "Strides Pharma Science"
   },
   {
@@ -1568,7 +1540,7 @@
     "name": "Shyam Metalics & Energy"
   },
   {
-    "symbol": "JSTL.NS",
+    "symbol": "JSL.NS",
     "name": "Jindal Stainless"
   },
   {
@@ -1592,7 +1564,7 @@
     "name": "Bikaji Foods International"
   },
   {
-    "symbol": "PRAJ.NS",
+    "symbol": "PRAJIND.NS",
     "name": "Praj Industries"
   },
   {
@@ -1612,8 +1584,8 @@
     "name": "HEG"
   },
   {
-    "symbol": "CENTURYTEXT.NS",
-    "name": "Century Textiles & Industries"
+    "symbol": "ABREL.NS",
+    "name": "Aditya Birla Real Estate Ltd"
   },
   {
     "symbol": "VSTIND.NS",
@@ -1640,7 +1612,7 @@
     "name": "Affle India"
   },
   {
-    "symbol": "MTAR.NS",
+    "symbol": "MTARTECH.NS",
     "name": "MTAR Technologies"
   },
   {
@@ -1656,7 +1628,7 @@
     "name": "Godrej Agrovet"
   },
   {
-    "symbol": "GOKALDAS.NS",
+    "symbol": "GOKEX.NS",
     "name": "Gokaldas Exports"
   },
   {
@@ -1672,8 +1644,8 @@
     "name": "Edelweiss Financial Services"
   },
   {
-    "symbol": "SUVENPHAR.NS",
-    "name": "Suven Pharmaceuticals"
+    "symbol": "SUVEN.NS",
+    "name": "Suven Life Sciences"
   },
   {
     "symbol": "NEULANDLAB.NS",
@@ -1688,10 +1660,6 @@
     "name": "Syngene International"
   },
   {
-    "symbol": "IIFLWAM.NS",
-    "name": "IIFL Wealth Management"
-  },
-  {
     "symbol": "HAPPSTMNDS.NS",
     "name": "Happiest Minds Technologies"
   },
@@ -1704,7 +1672,7 @@
     "name": "LatentView Analytics"
   },
   {
-    "symbol": "MSTC.NS",
+    "symbol": "MSTCLTD.NS",
     "name": "MSTC"
   },
   {
@@ -1752,7 +1720,7 @@
     "name": "Bajaj Electricals"
   },
   {
-    "symbol": "VIP.NS",
+    "symbol": "VIPIND.NS",
     "name": "VIP Industries"
   },
   {
@@ -1772,8 +1740,8 @@
     "name": "CarTrade Tech"
   },
   {
-    "symbol": "ETHOS.NS",
-    "name": "Ethos"
+    "symbol": "ETHOSLTD.NS",
+    "name": "Ethos Ltd"
   },
   {
     "symbol": "PTC.NS",
@@ -1808,12 +1776,8 @@
     "name": "Varroc Engineering"
   },
   {
-    "symbol": "LTFH.NS",
+    "symbol": "LTF.NS",
     "name": "L&T Finance"
-  },
-  {
-    "symbol": "ISEC.NS",
-    "name": "ICICI Securities"
   },
   {
     "symbol": "HDFCAMC.NS",
@@ -1896,12 +1860,8 @@
     "name": "FSN E-Commerce (Nykaa)"
   },
   {
-    "symbol": "GATI.NS",
-    "name": "GATI"
-  },
-  {
-    "symbol": "AEGISCHEM.NS",
-    "name": "Aegis Chemicals"
+    "symbol": "AEGISLOG.NS",
+    "name": "Aegis Logistics Ltd"
   },
   {
     "symbol": "INOXGREEN.NS",
