@@ -504,6 +504,10 @@
     "name": "Motilal Oswal Financial Services"
   },
   {
+    "symbol": "OFSS.NS",
+    "name": "Oracle Financial Services"
+  },
+  {
     "symbol": "BIOCON.NS",
     "name": "Biocon"
   },
@@ -550,6 +554,10 @@
   {
     "symbol": "RADICO.NS",
     "name": "Radico Khaitan"
+  },
+  {
+    "symbol": "UBL.NS",
+    "name": "United Breweries"
   },
   {
     "symbol": "UNITDSPR.NS",

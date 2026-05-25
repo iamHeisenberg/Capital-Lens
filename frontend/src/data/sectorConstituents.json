@@ -153,7 +153,7 @@
       "name": "Radico Khaitan"
     },
     {
-      "symbol": "MCDOWELL-N.NS",
+      "symbol": "UNITDSPR.NS",
       "name": "United Spirits"
     }
   ],
@@ -167,8 +167,8 @@
       "name": "Mahindra & Mahindra"
     },
     {
-      "symbol": "TATAMOTORS.NS",
-      "name": "Tata Motors"
+      "symbol": "TMPV.NS",
+      "name": "Tata Motors Passenger Vehicles"
     },
     {
       "symbol": "BAJAJ-AUTO.NS",
@@ -207,7 +207,7 @@
       "name": "Exide Industries"
     },
     {
-      "symbol": "MINDA.NS",
+      "symbol": "MINDACORP.NS",
       "name": "Uno Minda"
     }
   ],
@@ -500,10 +500,7 @@
       "symbol": "NETWORK18.NS",
       "name": "Network18 Media"
     },
-    {
-      "symbol": "TV18BRDCST.NS",
-      "name": "TV18 Broadcast"
-    },
+
     {
       "symbol": "SAREGAMA.NS",
       "name": "Saregama India"
