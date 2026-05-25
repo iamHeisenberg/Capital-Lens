@@ -177,7 +177,11 @@
   },
   {
     "symbol": "TMPV.NS",
-    "name": "Tata Motors Passenger Vehicles Ltd"
+    "name": "Tata Motors Passenger Vehicles"
+  },
+  {
+    "symbol": "TMCV.NS",
+    "name": "Tata Motors Commercial Vehicles"
   },
   {
     "symbol": "TATASTEEL.NS",
