@@ -4,6 +4,13 @@ import PageLayout from '../../components/layout/PageLayout';
 
 const features = [
     {
+        title: 'Markets',
+        description: 'Sector heatmap and performance table across 11 NSE indices. Drill into any sector to see constituent stock returns, beat/lag vs the index, and DMA trend charts.',
+        path: '/markets',
+        cta: 'View Markets',
+        accent: '#06b6d4',
+    },
+    {
         title: 'Technicals',
         description: 'Real-time DMA-based structural trend analysis for NSE equities. Track 50 & 200-day moving averages with systematic bias interpretation.',
         path: '/technicals',
@@ -11,17 +18,18 @@ const features = [
         accent: '#22c55e',
     },
     {
-        title: 'Methodology',
-        description: 'A five-layer investment framework — from durable business quality to AI-augmented risk validation. Built for long-term compounders.',
-        path: '/methodology',
-        cta: 'Read Framework',
-    },
-    {
         title: 'Fundamentals',
         description: 'Multi-layer financial analysis covering growth, profitability, capital efficiency, and valuation. Real-time data mapped to India-specific thresholds.',
         path: '/fundamentals',
         cta: 'View Fundamentals',
         accent: '#f59e0b',
+    },
+    {
+        title: 'Methodology',
+        description: 'A five-layer investment framework — from durable business quality to AI-augmented risk validation. Built for long-term compounders.',
+        path: '/methodology',
+        cta: 'Read Framework',
+        accent: '#3a3a5c',
     },
 ];
 
