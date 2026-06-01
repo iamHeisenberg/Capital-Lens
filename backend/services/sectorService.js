@@ -14,7 +14,8 @@
  *      won't be invalidated when stock cache version is bumped).
  *   6. toSummary() strips heavy arrays — used by /api/markets to keep the list response lean.
  *
- * Cache TTL: 4 hours (14400 seconds) — same as priceService.
+ * Cache TTL: 25 hours (90000 seconds) — matches the daily GitHub Actions cron. +1h buffer over
+ *             24h ensures keys never expire between scheduled seed runs.
  */
 
 const yahooFinance    = require('../utils/yahooFinanceClient');
@@ -208,7 +209,7 @@ const getSectorData = async (symbol, { forceRefresh = false, ctx = {}, meta = {}
         responseData.historicalCloses.length > 0;
 
     if (isValidForCache) {
-        await setCache(cacheKey, responseData, 14400, ctx); // 4h TTL
+        await setCache(cacheKey, responseData, 90000, ctx); // 25h TTL — matches daily price cron (+1h overlap buffer)
     } else {
         logger.warn('SKIP_CACHE_INVALID_DATA — sector data failed validation', {
             ...ctx,

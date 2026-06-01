@@ -20,9 +20,9 @@
  *   Sectors : ~15 symbols × 1 call × ~1s each  ÷ 3 concurrent = ~10 seconds
  *
  * Re-run schedule:
- *   - Fundamentals : every 7 days  (TTL = 7 days)
- *   - Price        : every 4 hours (TTL = 4h)
- *   - Sectors      : every 4 hours (TTL = 4h) — same as price
+ *   - Fundamentals : every 7 days  (TTL = 7.5 days)
+ *   - Price        : every 24h     (TTL = 25h)
+ *   - Sectors      : every 24h     (TTL = 25h) — seeded alongside price
  */
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
@@ -30,19 +30,28 @@ const Bottleneck = require('bottleneck');
 const tickers = require('../../frontend/src/data/tickers.json');
 
 // ── Parse CLI args ─────────────────────────────────────────────────────────────
-const args      = process.argv.slice(2);
-const limitIdx  = args.indexOf('--limit');
-const typeIdx   = args.indexOf('--type');
-const LIMIT     = limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) : tickers.length;
+const args = process.argv.slice(2);
+const limitIdx = args.indexOf('--limit');
+const typeIdx = args.indexOf('--type');
+const LIMIT = limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) : tickers.length;
 // Valid types: 'price' | 'fundamentals' | 'all' | 'sectors'
-const TYPE      = typeIdx  >= 0 ? args[typeIdx + 1] : 'all';
+const TYPE = typeIdx >= 0 ? args[typeIdx + 1] : 'all';
 // --refresh: bypass Redis read, force fresh Yahoo Finance fetch + re-cache
-const REFRESH   = args.includes('--refresh');
+const REFRESH = args.includes('--refresh');
 
 // ── Services (re-use production code so cache keys are identical) ──────────────
-const { getStockData }    = require('../services/priceService');
+const { getStockData } = require('../services/priceService');
 const { fetchFinancials } = require('../services/fundamentals/fetchFinancials');
-const { getSectorData }   = require('../services/sectorService');
+const { getSectorData } = require('../services/sectorService');
+
+// ── Redis client (for ping check before seeding starts) ────────────────────────
+// Imported directly so we can verify connectivity before wasting 6 minutes
+// seeding against a Redis instance we can't reach (missing/wrong secrets).
+const { Redis } = require('@upstash/redis');
+const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 // ── Sector catalog ─────────────────────────────────────────────────────────────
 const SECTORS = require('../../frontend/src/data/sectors.json');
@@ -55,10 +64,10 @@ const limiter = new Bottleneck({
 });
 
 const tickerList = tickers.slice(0, LIMIT).map((t) => t.symbol);
-const total      = tickerList.length;
-let   done       = 0;
-let   ok         = 0;
-let   failed     = 0;
+const total = tickerList.length;
+let done = 0;
+let ok = 0;
+let failed = 0;
 
 const ctx = { correlationId: 'seeder', endpoint: 'seeder', method: 'SEED' };
 
@@ -107,7 +116,7 @@ async function seedTicker(symbol) {
 // ── Sector seeding ─────────────────────────────────────────────────────────────
 
 let sectorDone = 0;
-let sectorOk   = 0;
+let sectorOk = 0;
 let sectorFail = 0;
 const sectorTotal = SECTORS.length;
 
@@ -148,6 +157,28 @@ async function seedSectors() {
 // ── Main ────────────────────────────────────────────────────────────────────────
 
 async function main() {
+    // ── Redis connectivity check ────────────────────────────────────────────────
+    // This MUST run first. cacheService swallows Redis errors gracefully (by
+    // design, so production never crashes on a cache miss). That same behaviour
+    // makes the seeder appear to succeed even when secrets are wrong — all 482
+    // tickers show ✅ but nothing is actually written to Redis.
+    //
+    // A PING here ensures GitHub Actions shows RED if the connection fails,
+    // so silent false-positives are impossible.
+    console.log('🔌  Verifying Redis connection...');
+    try {
+        const pong = await redis.ping();
+        if (pong !== 'PONG') throw new Error(`Unexpected PING response: ${pong}`);
+        console.log('✅  Redis connected successfully.\n');
+    } catch (err) {
+        console.error('\n❌  CRITICAL: Redis connection failed. Seeder aborted.');
+        console.error(`    URL   : ${process.env.UPSTASH_REDIS_REST_URL?.slice(0, 50) ?? 'undefined'}`);
+        console.error(`    Error : ${err.message}`);
+        console.error('\n    ➡  Check that UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN');
+        console.error('       are set correctly in GitHub → Settings → Secrets → Actions.');
+        console.error('       Values must match the Render environment variables exactly.\n');
+        process.exit(1);
+    }
     // ── Sector-only mode ───────────────────────────────────────────────────────
     if (TYPE === 'sectors') {
         await seedSectors();
