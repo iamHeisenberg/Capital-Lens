@@ -15,13 +15,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@upstash/redis": "^1.37.0",
     "axios": "^1.13.5",
     "bottleneck": "^2.19.5",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
+    "multer": "^2.1.1",
     "node-cron": "^4.2.1",
+    "pdf-parse": "^2.4.5",
     "yahoo-finance2": "^3.13.0"
   }
 }

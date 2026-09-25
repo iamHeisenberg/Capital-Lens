@@ -4,8 +4,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import GlobalSearchBar from '../search/GlobalSearchBar';
 
 const navLinks = [
-    { label: 'Home',         path: '/',            exact: true },
-    { label: 'Markets',      path: '/markets'                  },
+    { label: 'Home',         path: '/',            exact: true  },
+    { label: 'Markets',      path: '/markets'                   },
+    { label: 'AI Research',  path: '/research',    ai: true     },
     { label: 'Technicals',   path: '/technicals'               },
     { label: 'Fundamentals', path: '/fundamentals'             },
     { label: 'Methodology',  path: '/methodology'              },
@@ -144,6 +145,43 @@ function Navbar() {
                         {navLinks.map((link) => {
                             const active = isActive(link);
                             const target = getNavTarget(link);
+                            // Special AI Research pill styling
+                            if (link.ai) {
+                                return (
+                                    <Box
+                                        key={link.path}
+                                        component="span"
+                                        onClick={() => navigate(target)}
+                                        sx={{
+                                            cursor: 'pointer',
+                                            display: { xs: 'none', md: 'flex' },
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <Typography sx={{
+                                            fontSize: '0.78rem',
+                                            fontWeight: 600,
+                                            letterSpacing: '0.03em',
+                                            px: 1.5,
+                                            py: 0.5,
+                                            borderRadius: '20px',
+                                            background: active
+                                                ? 'linear-gradient(135deg, #06b6d4, #22c55e)'
+                                                : 'linear-gradient(135deg, rgba(6,182,212,0.15), rgba(34,197,94,0.15))',
+                                            border: '1px solid',
+                                            borderColor: active ? 'transparent' : 'rgba(6,182,212,0.3)',
+                                            color: active ? '#000' : '#06b6d4',
+                                            transition: 'all 0.2s ease',
+                                            '&:hover': {
+                                                background: 'linear-gradient(135deg, rgba(6,182,212,0.25), rgba(34,197,94,0.25))',
+                                                color: '#06b6d4',
+                                            },
+                                        }}>
+                                            ✦ {link.label}
+                                        </Typography>
+                                    </Box>
+                                );
+                            }
                             return (
                                 <Box
                                     key={link.path}
@@ -297,7 +335,9 @@ function Navbar() {
                                     py: 1.5,
                                     borderRadius: '8px',
                                     background: active ? 'rgba(255,255,255,0.06)' : 'transparent',
-                                    borderLeft: active ? '2px solid #06b6d4' : '2px solid transparent',
+                                    borderLeft: active
+                                        ? link.ai ? '2px solid #22c55e' : '2px solid #06b6d4'
+                                        : '2px solid transparent',
                                     cursor: 'pointer',
                                     transition: 'all 0.15s ease',
                                     '&:hover': { background: 'rgba(255,255,255,0.04)' },
@@ -306,10 +346,12 @@ function Navbar() {
                                 <Typography sx={{
                                     fontSize: '0.95rem',
                                     fontWeight: active ? 600 : 400,
-                                    color: active ? '#e8e8ed' : '#8a8a9e',
+                                    color: link.ai
+                                        ? active ? '#22c55e' : '#06b6d4'
+                                        : active ? '#e8e8ed' : '#8a8a9e',
                                     letterSpacing: '0.01em',
                                 }}>
-                                    {link.label}
+                                    {link.ai ? `✦ ${link.label}` : link.label}
                                 </Typography>
                             </Box>
                         );

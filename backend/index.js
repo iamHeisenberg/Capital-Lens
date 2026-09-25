@@ -31,6 +31,7 @@ const priceRoutes        = require('./routes/priceRoutes');
 const testFundamentalsRoutes = require('./routes/testFundamentalsRoutes');
 const fundamentalsRoutes = require('./routes/fundamentalsRoutes');
 const marketsRoutes      = require('./routes/marketsRoutes');
+const researchRoutes     = require('./routes/researchRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -55,6 +56,15 @@ app.use('/api', priceRoutes);
 app.use('/api', testFundamentalsRoutes);
 app.use('/api', fundamentalsRoutes);
 app.use('/api', marketsRoutes);
+app.use('/api', researchRoutes);
+
+// ── Error handler ─────────────────────────────────────────────────────────────
+// Last resort for anything a route didn't handle: JSON instead of Express's
+// default HTML page, which leaks stack traces and file paths.
+app.use((err, req, res, _next) => {
+    console.error(`[Unhandled] ${req.method} ${req.originalUrl}:`, err.message);
+    res.status(err.status || 500).json({ error: 'Something went wrong. Please try again.' });
+});
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, async () => {

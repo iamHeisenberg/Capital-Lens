@@ -4,6 +4,7 @@ import MethodologyPage from '../features/methodology/MethodologyPage';
 import HomePage from '../features/home/HomePage';
 import FundamentalsPage from '../features/fundamentals/FundamentalsPage';
 import MarketsPage from '../features/markets/MarketsPage';
+import ResearchPage from '../features/research/ResearchPage';
 
 /**
  * Redirects /analysis/:ticker → /technicals/:ticker.
@@ -19,6 +20,9 @@ const routes = [
 
     // Markets — sector & index performance dashboard
     { path: '/markets', element: <MarketsPage /> },
+
+    // AI Research Engine — standalone flagship feature
+    { path: '/research', element: <ResearchPage /> },
 
     // Technicals — canonical routes
     { path: '/technicals',         element: <StockAnalysisPage /> },

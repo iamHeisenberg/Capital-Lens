@@ -14,4 +14,13 @@
  */
 const CACHE_VERSION = 'v4';
 
-module.exports = { CACHE_VERSION };
+/**
+ * AI Research briefs are versioned separately so price/fundamentals changes
+ * don't wipe them (regenerating costs AI quota). Bump this when the brief's
+ * shape or the prompt changes.
+ *
+ * Key format: research:v1:TCS.NS
+ */
+const RESEARCH_CACHE_VERSION = 'v1';
+
+module.exports = { CACHE_VERSION, RESEARCH_CACHE_VERSION };

@@ -2,7 +2,7 @@
 
 const { Redis } = require('@upstash/redis');
 const logger = require('../utils/logger');
-const { CACHE_VERSION } = require('../config/cacheConfig');
+const { CACHE_VERSION, RESEARCH_CACHE_VERSION } = require('../config/cacheConfig');
 
 const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL,
@@ -84,6 +84,9 @@ const clearCache = async (key, ctx = {}) => {
 const cacheKeys = {
     price:        (ticker) => `${CACHE_VERSION}:price:${ticker.toUpperCase()}`,
     fundamentals: (ticker) => `${CACHE_VERSION}:fundamentals:${ticker.toUpperCase()}`,
+    // Own version (see RESEARCH_CACHE_VERSION). Keyed by ticker, or by company
+    // name when no ticker was given.
+    research:     (ticker) => `research:${RESEARCH_CACHE_VERSION}:${ticker.trim().toUpperCase()}`,
     // Sector indices use a version-free namespace — they are additive and should
     // not be invalidated when the stock CACHE_VERSION is bumped.
     sector:       (symbol) => `sector:${symbol.toUpperCase()}`,
